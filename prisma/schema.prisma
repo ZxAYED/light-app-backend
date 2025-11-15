@@ -6,91 +6,120 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
 model User {
-  id                String            @id @default(uuid())
-  first_name        String
-  last_name         String
-  phone             String
-  email             String            @unique
-  password          String
-  organisation_name String
-  role              USER_ROLE
-  organisation_role ORGANISATION_ROLE
-  screens           Screen[]          @relation("UserScreens")
-  bundles           Bundle[]          @relation("UserBundles")
-  otp               String?
-  otp_expires_at    DateTime?
-  is_verified       Boolean           @default(false)
+  id        String    @id @default(uuid())
+  email     String  @unique
+  password  String
+  role      UserRole  @default(PARENT)
+  createdAt DateTime  @default(now())
 
-  password_reset_otp     String?
-  password_reset_expires DateTime?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  status USER_STATUS @default(active)
+  goalsAuthored Goal[]
+  parentProfile ParentProfile?
+  childProfile  ChildProfile?
 }
 
-enum USER_STATUS {
-  active
-  blocked
+enum UserRole {
+  PARENT
+  CHILD
+}
+model ParentProfile {
+  id              String      @id @default(uuid())
+  userId          String      @unique
+
+  name            String
+  phone           String
+  avatar          String?
+  gender          Gender?
+  dateOfBirth     DateTime?
+  location        String?
+
+  pushNotification Boolean? @default(true)
+  dailyReminders   Boolean? @default(true)
+  childTaskUpdates Boolean? @default(true)
+
+  user        User           @relation(fields: [userId], references: [id])
+  children    ChildProfile[]
+}
+model ChildProfile {
+  id            String     @id @default(uuid())
+  userId        String     @unique
+  parentId      String
+
+ accountType        ChildAccountType @default(MODERATOR)
+  name          String
+  gender        Gender?
+  phone         String?
+  email         String?
+  dateOfBirth   DateTime?
+  location      String?
+  avatar        String?
+
+  coins         Int         @default(0)
+  relation      String?
+
+  addAccounts        Boolean @default(false)
+  accessAccounts     Boolean @default(false)
+  editProfile        Boolean @default(true)
+  createGoals        Boolean @default(true)
+  approveTasks       Boolean @default(true)
+  giveFeedback       Boolean @default(true)
+  customizeAvatar    Boolean @default(true)
+  deleteGoals        Boolean @default(false)
+  unlockRewards      Boolean @default(true)
+  deleteAccount      Boolean @default(false)
+
+  goals           Goal[]
+  parent      ParentProfile  @relation(fields: [parentId], references: [id])
+  user        User           @relation(fields: [userId], references: [id])
+}
+enum Gender {
+  MALE
+  FEMALE
+}
+enum ChildAccountType {
+  ADMIN
+  MODERATOR
+  VIEWER
 }
 
-enum USER_ROLE {
-  customer
-  admin
+
+
+
+
+model Goal {
+  id            String      @id @default(uuid())
+  childId       String
+  authorId      String
+  authorRole    AuthorRole  @default(PARENT)
+
+  title         String
+  description   String?
+  type          GoalType    @default(ONE_TIME)
+  status        GoalStatus  @default(ACTIVE)
+  rewardCoins   Int         @default(0)
+  startDate     DateTime?
+  endDate       DateTime?
+  createdAt     DateTime    @default(now())
+
+  child         ChildProfile @relation(fields: [childId], references: [id])
+  author        User         @relation(fields: [authorId], references: [id])
 }
 
-enum ORGANISATION_ROLE {
-  advertiser
-  agency
+enum AuthorRole {
+  PARENT
+  CHILD
 }
 
-model Screen {
-  id           String              @id @default(uuid())
-  adminId      String
-  slug         String
-  screen_name  String
-  screen_size  String
-  description  String
-  resolution   String
-  lat          String
-  lng          String
-  img_url      String
-  price        Float
-  duration     String
-  availability SCREEN_AVAILABILITY
-  status       SCREEN_STATUS
-  location     String
-  admin        User                @relation("UserScreens", fields: [adminId], references: [id])
-  bundles      Bundle[]            @relation("BundleScreens")
+enum GoalStatus {
+  ACTIVE       // currently running
+  PAUSED       // temporarily stopped by parent
+  COMPLETED    // goal fully done
+  CANCELLED    // removed / ended early
 }
-
-enum SCREEN_AVAILABILITY {
-  available
-  maintenance
-}
-
-enum SCREEN_STATUS {
-  active
-  occupied
-}
-
-model Bundle {
-  id          String        @id @default(uuid())
-  adminId     String
-  bundle_name String
-  screens     Screen[]      @relation("BundleScreens")
-  img_url     String
-  price       Float
-  duration    String
-  status      BUNDLE_STATUS
-  location    String
-  admin       User          @relation("UserBundles", fields: [adminId], references: [id])
-}
-
-enum BUNDLE_STATUS {
-  ongoing
-  expired
+enum GoalType {
+  ONE_TIME    // do it once and done
+  DAILY       // repeat every day
+  WEEKLY      // repeat every week
+  MONTHLY     // repeat every month
 }
