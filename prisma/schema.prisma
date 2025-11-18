@@ -21,6 +21,7 @@ model User {
   HelpRequest        HelpRequest[]
   HelpRequestMessage HelpRequestMessage[]
   PushToken          PushToken[]
+  auditLogs          AuditLog[]
 
   @@index([role])
 }
@@ -28,6 +29,7 @@ model User {
 enum UserRole {
   PARENT
   CHILD
+  ADMIN
 }
 
 model ParentProfile {
@@ -85,6 +87,7 @@ model ChildProfile {
   HelpRequest  HelpRequest[]
   ChildAsset   ChildAsset[]
   PushToken    PushToken[]
+  auditLogs    AuditLog[]
 
   @@index([parentId]) // Fetch children for parent quickly
   @@index([name]) // Useful for searching child by name
@@ -318,7 +321,7 @@ model PushToken {
   childId String?
 
   token     String   @unique
-  platform  Platform // ANDROID, IOS, WEB
+  platform  Platform // ANDROID, IOS
   createdAt DateTime @default(now())
 
   user  User?         @relation(fields: [userId], references: [id])
@@ -331,5 +334,16 @@ model PushToken {
 enum Platform {
   ANDROID
   IOS
-  WEB
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  childId   String?
+  action    String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  user  User?         @relation(fields: [userId], references: [id])
+  child ChildProfile? @relation(fields: [childId], references: [id])
 }
