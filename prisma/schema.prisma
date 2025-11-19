@@ -2,17 +2,24 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// prisma/schema.prisma
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // directUrl = env("DIRECT_URL")
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  role      UserRole @default(PARENT)
-  createdAt DateTime @default(now())
+  id                     String    @id @default(uuid())
+  email                  String    @unique
+  password               String
+  role                   UserRole  @default(PARENT)
+  createdAt              DateTime  @default(now())
+  otp                    String?
+  otp_expires_at         DateTime?
+  is_verified            Boolean   @default(false)
+  password_reset_otp     String?
+  password_reset_expires DateTime?
 
   goalsAuthored      Goal[]
   parentProfile      ParentProfile?
@@ -32,14 +39,22 @@ enum UserRole {
   ADMIN
 }
 
+enum Relation {
+  FATHER
+  MOTHER
+  BROTHER
+  SISTER
+}
+
 model ParentProfile {
   id     String @id @default(uuid())
   userId String @unique
 
   name        String
   phone       String
-  image       String
-  gender      Gender?
+  image       String?
+  imagePath   String?
+  relation    Relation?
   dateOfBirth DateTime?
   location    String?
   giftedCoins Int?      @default(0)
@@ -67,7 +82,8 @@ model ChildProfile {
   email       String?
   dateOfBirth DateTime?
   location    String?
-  image       String
+  image       String?
+  imagePath   String?
 
   coins    Int     @default(0)
   relation String?
@@ -284,15 +300,16 @@ model Asset {
   id        String        @id @default(uuid())
   name      String
   category  AssetCategory
-  style     String? // e.g., "Long", "Curly", "Basic", "Style 1"
-  colorName String? // e.g., "Brown", "Dark", optional
-  image     String // final PNG path
-  price     Int? // null = free
+  style     String?
+  colorName String?
+  image     String
+  imagePath String?
+  price     Int
 
-  origin String? // e.g., "Asia", "Europe", "Bangladesh", "USA"
-  gender AssetGender? // MALE, FEMALE, UNISEX
+  origin String?
+  gender AssetGender?
 
-  avatarId String? // foreign key to parent avatar
+  avatarId String?
   avatar   Avatar? @relation(fields: [avatarId], references: [id])
 
   createdAt DateTime @default(now())

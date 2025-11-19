@@ -1,15 +1,19 @@
-import prisma from "../../../shared/prisma";
 import bcrypt from "bcrypt";
-import config from "../../../config";
-import { Secret } from "jsonwebtoken";
-import { jwtHelpers } from "../../../helpers/jwtHelpers";
-import AppError from "../../Errors/AppError";
 import status from "http-status";
-import { ORGANISATION_ROLE, User, USER_ROLE } from "@prisma/client";
+import { Secret } from "jsonwebtoken";
+import config from "../../../config";
+import { jwtHelpers } from "../../../helpers/jwtHelpers";
+import prisma from "../../../shared/prisma";
+import AppError from "../../Errors/AppError";
+
+
+import { UserRole } from "@prisma/client";
 import { sendOtpEmail } from "../../../utils/sendOtpEmail";
 import { sendPasswordResetOtp } from "../../../utils/sendResetPasswordOtp";
+import { CreateChildInput, CreateUserInput } from "./auth.validation";
 
-const createUser = async (payload: User) => {
+const createUser = async (payload: CreateUserInput) => {
+
   // Step 1: Check if user already exists
   const isUserExist = await prisma.user.findFirst({
     where: { email: payload.email },
@@ -20,40 +24,47 @@ const createUser = async (payload: User) => {
   }
 
   // Step 2: Hash password
-  const hashPassword = await bcrypt.hash(payload.password, 12);
+  const hashedPassword = await bcrypt.hash(payload.password as string, 12);
 
-  // Step 3: Generate OTP (4 digits) & expiry (e.g., 10 minutes)
-  const otp = Math.floor(1000 + Math.random() * 9000).toString();
+  // Step 3: Generate OTP (5 digits) & expiry (e.g., 5 minutes)
+  const otp = Math.floor(10000 + Math.random() * 90000).toString();
   const otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
-  // Step 4: Prepare user data
-  const userData = {
-    ...payload,
-    password: hashPassword,
-    otp,
-    otp_expires_at: otpExpiresAt,
-    is_verified: false,
-    role: USER_ROLE.customer,
-    organisation_role: ORGANISATION_ROLE.advertiser,
-  };
 
-  console.log("📨 OTP generated:", otp);
+  const transaction = await prisma.$transaction(async (tx) => {
+    const res = await tx.user.create({
+      data: {
+        email: payload.email,
+        password: hashedPassword,
+        role: "PARENT",
+        otp,
+        otp_expires_at: otpExpiresAt,
+        is_verified: false,
+      },
+      select: {
+        id: true,
+        email: true,
+        is_verified: true,
+      },
+    });
 
-  // // Step 5: Save user (exclude OTP in response)
-  const result = await prisma.user.create({
-    data: userData,
-    select: {
-      id: true,
-      email: true,
-      phone: true,
-      is_verified: true,
-    },
-  });
 
-  sendOtpEmail(payload.email, otp);
+    const result = await tx.parentProfile.create({
+  data: {
+    userId: res.id,
+    name: payload.name,
+    phone: payload.phone
+  }
+});
+  await  sendOtpEmail(payload.email, otp);
 
-  return result;
+
+    return { ...res, ...result };
+  })
+
+  return transaction;
 };
+
 
 const resendOtp = async (email: string) => {
   // Step 1: Find user by email
@@ -68,7 +79,7 @@ const resendOtp = async (email: string) => {
   }
 
   // Step 2: Generate new OTP and expiry
-  const otp = Math.floor(1000 + Math.random() * 9000).toString();
+  const otp = Math.floor(10000 + Math.random() * 90000).toString();
   const otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
 
   // Step 3: Update user record with new OTP
@@ -80,7 +91,7 @@ const resendOtp = async (email: string) => {
     },
   });
 
-  console.log("📨 New OTP generated:", otp);
+
 
   // Step 4: Send OTP email
   await sendOtpEmail(email, otp);
@@ -121,7 +132,7 @@ const verifyOtp = async (email: string, otp: string) => {
     select: {
       id: true,
       email: true,
-      phone: true,
+      role: true,
       is_verified: true,
     },
   });
@@ -156,17 +167,48 @@ const loginUser = async (payload: { email: string; password: string }) => {
     throw new AppError(status.UNAUTHORIZED, "Incorrect password");
   }
 
+  let profile
+  if (user.role === UserRole.PARENT) {
+    profile = await prisma.parentProfile.findFirst({
+      where: { userId: user.id },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        relation: true,
+        image: true,
+        dateOfBirth: true,
+        location: true,
+      }
+    })
+  }
+  else if (user.role === UserRole.CHILD) {
+    profile = await prisma.childProfile.findFirst({
+      where: { userId: user.id },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        relation: true,
+        coins: true,
+        image: true,
+        location: true,
+        dateOfBirth: true,
+        gender: true,
+      }
+    });
+  }
+  else {
+    profile = user
+  }
+
   // Step 4: Generate access & refresh tokens
   const accessToken = jwtHelpers.generateToken(
     {
       id: user.id,
       email: user.email,
-      first_name: user.first_name,
-      last_name: user.last_name,
+      profile,
       role: user.role,
-      organisation_role: user.organisation_role,
-      organisation_name: user.organisation_name,
-      phone: user.phone,
     },
     config.jwt.access_token_secret as Secret,
     config.jwt.access_token_expires_in as string
@@ -182,14 +224,9 @@ const loginUser = async (payload: { email: string; password: string }) => {
   return {
     user: {
       id: user.id,
-      first_name: user.first_name,
-      last_name: user.last_name,
       email: user.email,
-      phone: user.phone,
       role: user.role,
-      organisation_role: user.organisation_role,
-      organisation_name: user.organisation_name,
-      is_verified: user.is_verified,
+      profile,
     },
     accessToken,
     refreshToken,
@@ -206,27 +243,61 @@ const refreshAccessToken = async (token: string) => {
 
     const { email } = decoded;
 
-    const userData = await prisma.user.findFirst({
+    const user = await prisma.user.findFirst({
       where: { email },
     });
 
-    if (!userData) {
+    if (!user) {
       throw new AppError(status.NOT_FOUND, "User not found");
     }
+  let profile
+  if (user.role === UserRole.PARENT) {
+    profile = await prisma.parentProfile.findFirst({
+      where: { userId: user.id },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        relation: true,
+        image: true,
+        dateOfBirth: true,
+        location: true,
+      }
+    })
+  }
+  else if (user.role === UserRole.CHILD) {
+    profile = await prisma.childProfile.findFirst({
+      where: { userId: user.id },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        relation: true,
+        coins: true,
+        image: true,
+        location: true,
+        dateOfBirth: true,
+        gender: true,
+      }
+    });
+  }
+  else {
+    profile = user
+  }
 
-    const accessToken = jwtHelpers.generateToken(
-      {
-        id: userData.id,
-        email: userData.email,
-        first_name: userData.first_name,
-        last_name: userData.last_name,
-        role: userData.role,
-        organisation_role: userData.organisation_role,
-        phone: userData.phone,
-      },
-      config.jwt.access_token_secret as Secret,
-      config.jwt.access_token_expires_in as string
-    );
+  // Step 4: Generate access & refresh tokens
+  const accessToken = jwtHelpers.generateToken(
+    {
+      id: user.id,
+      email: user.email,
+      profile,
+      role: user.role,
+    },
+    config.jwt.access_token_secret as Secret,
+    config.jwt.access_token_expires_in as string
+  );
+
+ 
 
     return {
       accessToken,
@@ -275,8 +346,8 @@ const requestPasswordReset = async (email: string) => {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) throw new AppError(status.NOT_FOUND, "User not found");
 
-  // Generate 4-digit OTP
-  const otp = Math.floor(1000 + Math.random() * 9000).toString();
+  // Generate 5-digit OTP
+  const otp = Math.floor(10000 + Math.random() * 90000).toString();
 
   // Set expiry 5 minutes from now
   const otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
@@ -299,7 +370,7 @@ const requestPasswordReset = async (email: string) => {
 
 interface ResetPasswordPayload {
   email: string;
-  otp: string;        // 4-digit OTP
+  otp: string;       
   newPassword: string;
 }
 
@@ -331,6 +402,88 @@ const resetPassword = async (payload: ResetPasswordPayload & { opt?: string }) =
 
   return { message: "Password has been reset successfully" };
 };
+const createChild = async (payload: CreateChildInput & {image?:string , imagePath?:string}) => {
+  // Step 1: Check if user already exists
+  const isUserExist = await prisma.user.findFirst({
+    where: { email: payload.email },
+  });
+
+  if (isUserExist) {
+    throw new AppError(status.CONFLICT, "User Already Exists");
+  }
+
+  // Step 2: Hash password
+  const hashPassword = await bcrypt.hash(payload.password, 12);
+
+  // Step 3: Prepare user data
+  const userData = {
+    email: payload.email,
+    password: hashPassword,
+    role: UserRole.CHILD,
+    is_verified: true, // children do not need OTP
+  };
+
+  const result = await prisma.$transaction(async (tx) => {
+    // Step 4: Create the User entry
+    const user = await tx.user.create({
+      data: userData,
+      select: {
+        id: true,
+        email: true,
+        role: true,
+      },
+    });
+
+    // Step 5: Create ChildProfile entry linked to parent
+    const child = await tx.childProfile.create({
+      data: {
+        userId: user.id,
+        parentId: payload.parentId, // already authenticated parent
+        accountType: payload.accountType ,
+        name: payload.name,
+        gender: payload.gender,
+        phone: payload.phone,
+        email: payload.email,
+        dateOfBirth: payload.dateOfBirth,
+        location: payload.location,
+       image: payload.image,
+       imagePath: payload.imagePath,
+
+        relation: payload.relation,
+
+        // Permissions (defaults)
+        editProfile: payload.editProfile ?? true,
+        createGoals: payload.createGoals ?? false,
+        approveTasks: payload.approveTasks ?? false,
+        deleteGoals: payload.deleteGoals ?? false,  
+      },
+    });
+
+    return { user, child };
+  });
+
+  return result;
+};
+const updateChild = async (id: string, payload: Partial<CreateChildInput> & {image?:string , imagePath?:string}) => {
+  // Step 1: Check if user already exists
+  
+
+const data = {
+      name: payload.name,
+      gender: payload.gender,
+      phone: payload.phone,
+      dateOfBirth: payload.dateOfBirth,
+      location: payload.location,
+     image: payload.image,
+     imagePath: payload.imagePath,
+    }
+  const result = await prisma.childProfile.update({
+    where: { id},
+    data: data,
+    
+  });
+  return result;
+};
 
 
 export const UserService = {
@@ -341,5 +494,7 @@ export const UserService = {
   verifyOtp,
   changePassword,
   requestPasswordReset,
-  resetPassword
+  resetPassword,
+  createChild,
+  updateChild
 };

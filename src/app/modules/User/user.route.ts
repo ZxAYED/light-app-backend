@@ -1,15 +1,17 @@
 import express from "express";
 
+
+import { UserRole } from "@prisma/client";
 import RoleValidation from "../../middlewares/RoleValidation";
 import { UserDataController } from "./user.controller";
-import { USER_ROLE } from "@prisma/client";
+
 const router = express.Router();
 
-router.get("/all-users",  RoleValidation( USER_ROLE.admin),
+router.get("/all-users",  RoleValidation( UserRole.ADMIN),
  UserDataController.getAllUsers);
 router.get(
   "/me",
-  RoleValidation(USER_ROLE.customer, USER_ROLE.admin),
+  RoleValidation(UserRole.PARENT, UserRole.ADMIN),
   UserDataController.myProfileInfo
 );
 

@@ -1,20 +1,31 @@
+import { UserRole } from "@prisma/client";
 import express from "express";
-import { UserController } from "./auth.controller";
 import RoleValidation from "../../middlewares/RoleValidation";
-import { USER_ROLE } from "@prisma/client";
+import { UserController } from "./auth.controller";
+
+import { upload } from "../../middlewares/upload";
+import validateResource from "../../middlewares/ValidationParser";
+import { changePasswordSchema, createChildSchema, createUserSchema, loginSchema, requestPasswordResetSchema, resetPasswordSchema } from "./auth.validation";
 
 const router = express.Router();
 
-router.post("/create-user", UserController.createUser);
-router.post("/resend-otp", UserController.resendOtp);
+router.post("/create-parent", validateResource(createUserSchema), UserController.createUser);
+router.post("/create-child", RoleValidation(UserRole.PARENT), validateResource(createChildSchema),   upload.single("file")
+, upload.single("file") ,UserController.createChild);
+router.patch("/update-child", RoleValidation(UserRole.CHILD), validateResource(createChildSchema),  upload.single("file")
+, upload.single("file"),UserController.updateChild);
+
+
+router.post("/resend-otp",  UserController.resendOtp);
 router.post("/verify-otp", UserController.verifyOtp);
-router.post("/login", UserController.loginUser);
+router.post("/login",validateResource(loginSchema), UserController.loginUser);
 router.post("/refresh-token", UserController.refreshToken);
-router.post("/reset-password", UserController.resetPassword);
-router.post("/request-reset-password", UserController.requestPasswordReset);
+router.post("/reset-password", validateResource(resetPasswordSchema),  UserController.resetPassword);
+router.post("/request-reset-password", validateResource(requestPasswordResetSchema), UserController.requestPasswordReset);
 router.post(
-  "/change-password",
-  RoleValidation(USER_ROLE.customer, USER_ROLE.admin),
+  "/change-password", 
+  validateResource(changePasswordSchema),
+  RoleValidation(UserRole.PARENT, UserRole.ADMIN, UserRole.CHILD),
   UserController.changePassword
 );
 
