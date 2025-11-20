@@ -8,14 +8,13 @@ export const createUserSchema = z.object({
 });
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 
-// Login validation (simple string checks)
 export const loginSchema = z.object({
   email: z.string().email("Invalid email format"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 
-// Change password validation (user id comes from auth middleware)
+
 export const changePasswordSchema = z.object({
   oldPassword: z
     .string()
@@ -52,9 +51,7 @@ export const ChildAccountTypeEnum = z.enum(["ADMIN", "MODERATOR", "VIEWER"]);
 
 // Main schema
 export const createChildSchema = z.object({
-  parentId: z.string().uuid({
-    message: "Parent ID must be a valid UUID",
-  }),
+
 
   email: z.string().email({
     message: "Invalid email format",
@@ -74,35 +71,26 @@ export const createChildSchema = z.object({
 
   dateOfBirth: z.string().optional(), // frontend will send ISO string
   location: z.string().optional(),
-  
+
 
   accountType: ChildAccountTypeEnum.default("MODERATOR"),
 
   // Permissions
   editProfile: z.boolean().default(true),
-  createGoals: z.boolean().default(true),
-  approveTasks: z.boolean().default(true),
+  createGoals: z.boolean().default(false),
+  approveTasks: z.boolean().default(false),
   deleteGoals: z.boolean().default(false),
-  unlockRewards: z.boolean().default(true),
+
 });
 
 
 export const updateChildSchema = z.object({
- 
- 
-
-
   name: z.string().min(1, {
     message: "Child name is required",
-  }),
-
+  }).optional(),
   gender: GenderEnum.optional(),
   phone: z.string().optional(),
-
-  dateOfBirth: z.string().optional(), 
+  dateOfBirth: z.string().optional(),
   location: z.string().optional(),
-  
-
-
 });
 export type CreateChildInput = z.infer<typeof createChildSchema>;

@@ -14,3 +14,9 @@ main().catch((err) => {
   console.error("❌ Server failed to start:", err);
   process.exit(1);
 });
+process.on("uncaughtException", (err) => {
+  console.error("UNCAUGHT EXCEPTION 💥", err);
+});
+process.on("unhandledRejection", (err) => {
+  console.error("UNHANDLED REJECTION 💥", err);
+});

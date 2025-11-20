@@ -1,23 +1,20 @@
 import { NextFunction, Request, Response } from "express";
 import { AnyZodObject } from "zod";
 
-const validateResource =
+const validateJSON =
   (schema: AnyZodObject) =>
   (req: Request, res: Response, next: NextFunction) => {
     try {
-      schema.parse(
-        req.body,
-       
-      );
-
-      return next();
+      const parsed = schema.parse(req.body);
+      req.body = parsed;
+      next();
     } catch (error: any) {
       return res.status(400).json({
-        status: "failed",
-        success:false ,
+        success: false,
+        message: "Validation failed",
         errors: error.errors,
       });
     }
   };
 
-export default validateResource;
+export default validateJSON;

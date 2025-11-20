@@ -402,7 +402,7 @@ const resetPassword = async (payload: ResetPasswordPayload & { opt?: string }) =
 
   return { message: "Password has been reset successfully" };
 };
-const createChild = async (payload: CreateChildInput & {image?:string , imagePath?:string}) => {
+const createChild = async (payload: CreateChildInput & {image?:string , imagePath?:string, userId:string}) => {
   // Step 1: Check if user already exists
   const isUserExist = await prisma.user.findFirst({
     where: { email: payload.email },
@@ -422,6 +422,13 @@ const createChild = async (payload: CreateChildInput & {image?:string , imagePat
     role: UserRole.CHILD,
     is_verified: true, // children do not need OTP
   };
+const parent = await prisma.parentProfile.findFirst({
+  where: { userId: payload.userId },
+});
+if (!parent) {
+  throw new AppError(status.NOT_FOUND, "Parent not found");
+}
+
 
   const result = await prisma.$transaction(async (tx) => {
     // Step 4: Create the User entry
@@ -438,7 +445,7 @@ const createChild = async (payload: CreateChildInput & {image?:string , imagePat
     const child = await tx.childProfile.create({
       data: {
         userId: user.id,
-        parentId: payload.parentId, // already authenticated parent
+        parentId: parent.id, 
         accountType: payload.accountType ,
         name: payload.name,
         gender: payload.gender,
@@ -457,28 +464,28 @@ const createChild = async (payload: CreateChildInput & {image?:string , imagePat
         approveTasks: payload.approveTasks ?? false,
         deleteGoals: payload.deleteGoals ?? false,  
       },
+    
     });
 
-    return { user, child };
+    return { ...user, ...child };
   });
+
 
   return result;
 };
-const updateChild = async (id: string, payload: Partial<CreateChildInput> & {image?:string , imagePath?:string}) => {
-  // Step 1: Check if user already exists
-  
-
+const updateChild = async (payload: Partial<CreateChildInput> & {image?:string , imagePath?:string, childId?:string}) => {
+const {childId, ...others} = payload
 const data = {
-      name: payload.name,
-      gender: payload.gender,
-      phone: payload.phone,
-      dateOfBirth: payload.dateOfBirth,
-      location: payload.location,
-     image: payload.image,
-     imagePath: payload.imagePath,
+      name: others.name,
+      gender: others.gender,
+      phone: others.phone,
+      dateOfBirth: others.dateOfBirth,
+      location: others.location,
+     image: others.image,
+     imagePath: others.imagePath,
     }
   const result = await prisma.childProfile.update({
-    where: { id},
+    where: { id:childId},
     data: data,
     
   });

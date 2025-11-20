@@ -1,3 +1,4 @@
+import { User } from "@prisma/client";
 import { Request, RequestHandler } from "express";
 import fs from 'fs/promises';
 import status from "http-status";
@@ -19,16 +20,18 @@ const createUser: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 const createChild: RequestHandler = catchAsync(async (req, res) => {
-
+  const payload = { ...req.body };
+  payload.userId = (req as Request & { user?: User }).user?.id;
+  if (!payload.userId) {
+    throw new AppError(status.UNAUTHORIZED, "Unauthorized access");
+  }
 
   if (req?.file) {
     try {
       const ImageName = `Image-${Date.now()}`;
       const { url: imageLink, path: imagePath } = await uploadImageToSupabase(req.file, ImageName);
-
-
-      req.body.image = imageLink;
-      req.body.imagePath = imagePath;
+      payload.image = imageLink;
+      payload.imagePath = imagePath;
 
       await fs.unlink(req.file.path).catch((err) => {
         if (err) {
@@ -37,50 +40,47 @@ const createChild: RequestHandler = catchAsync(async (req, res) => {
       });
     } catch (err) {
       console.error("❌ Upload error:", err);
-      res.status(500).json({ success: false, message: "fetch failed" });
+      res.status(500).json({ success: false, message: "Image upload failed" });
     }
   }
-  const result = await UserService.createChild(req.body);
+
+  const result = await UserService.createChild(payload);
+
 
   sendResponse(res, {
     statusCode: status.OK,
     success: true,
-    message: "Child Registration Successful. Please verify your email.",
+    message: "Child Registration Successful.",
     data: result,
   });
 });
 const updateChild: RequestHandler = catchAsync(async (req, res) => {
 
-  const email = (req as Request & { user?: any }).user.email;
-  const isUserExist = await prisma.user.findFirst({
-    where: { email },
-  });
+  const { childId } = req.query;
+req.body.childId = childId
 
-  if (isUserExist) {
-    throw new AppError(status.CONFLICT, "User Already Exists");
-  }
   if (req?.file) {
     try {
-
-      const oldImage = await prisma.childProfile.findUnique({
-        where: { userId: isUserExist!.id },
+      const childProfile = await prisma.childProfile.findFirst({
+        where: { id: childId as string },
       });
-      const oldPath = oldImage?.imagePath
+      if (!childProfile) {
+        throw new AppError(status.NOT_FOUND, "Child not found");
+      }
 
+      const oldPath = childProfile?.imagePath
       const ImageName = `Image-${Date.now()}`;
-      let imageLink = "";
-      let imagePath = "";
+
       if (oldPath) {
         const { url: imageLink, path: imagePath } = await uploadImageToSupabase(req.file, ImageName, oldPath);
+        req.body.image = imageLink;
+        req.body.imagePath = imagePath;
       }
       else {
         const { url: imageLink, path: imagePath } = await uploadImageToSupabase(req.file, ImageName);
+        req.body.image = imageLink;
+        req.body.imagePath = imagePath;
       }
-
-
-
-      req.body.image = imageLink;
-      req.body.imagePath = imagePath;
 
       await fs.unlink(req.file.path).catch((err) => {
         if (err) {
@@ -89,15 +89,15 @@ const updateChild: RequestHandler = catchAsync(async (req, res) => {
       });
     } catch (err) {
       console.error("❌ Upload error:", err);
-      res.status(500).json({ success: false, message: "fetch failed" });
+      res.status(500).json({ success: false, message: "Child Update failed" });
     }
   }
-  const result = await UserService.createChild(req.body);
+  const result = await UserService.updateChild(req.body);
 
   sendResponse(res, {
     statusCode: status.OK,
     success: true,
-    message: "Child Registration Successful. Please verify your email.",
+    message: "Child updated successfully.",
     data: result,
   });
 });

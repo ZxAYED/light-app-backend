@@ -31,7 +31,7 @@ app.get("/api-docs.json", (_req, res) => {
 app.use(globalErrorHandler);
 
 app.get("/", (req: Request, res: Response) => {
-  res.send("Server is running 🎉🎉");
+  res.send("Shalana Server  is running  🎉🎉");
 });
 
 app.use((req: Request, res: Response, next: NextFunction) => {
