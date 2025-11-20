@@ -2,95 +2,365 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// prisma/schema.prisma
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
-  id                String            @id @default(uuid())
-  first_name        String
-  last_name         String
-  phone             String
-  email             String            @unique
-  password          String
-  organisation_name String
-  role              USER_ROLE
-  organisation_role ORGANISATION_ROLE
-  screens           Screen[]          @relation("UserScreens")
-  bundles           Bundle[]          @relation("UserBundles")
-  otp               String?
-  otp_expires_at    DateTime?
-  is_verified       Boolean           @default(false)
-
+  id                     String    @id @default(uuid())
+  email                  String    @unique
+  password               String
+  role                   UserRole  @default(PARENT)
+  createdAt              DateTime  @default(now())
+  otp                    String?
+  otp_expires_at         DateTime?
+  is_verified            Boolean   @default(false)
   password_reset_otp     String?
   password_reset_expires DateTime?
+
+  goalsAuthored      Goal[]
+  parentProfile      ParentProfile?
+  childProfile       ChildProfile?
+  Notification       Notification[]
+  HelpRequest        HelpRequest[]
+  HelpRequestMessage HelpRequestMessage[]
+  PushToken          PushToken[]
+  auditLogs          AuditLog[]
+
+  @@index([role])
+}
+
+enum UserRole {
+  PARENT
+  CHILD
+  ADMIN
+}
+
+enum Relation {
+  FATHER
+  MOTHER
+  BROTHER
+  SISTER
+}
+
+model ParentProfile {
+  id     String @id @default(uuid())
+  userId String @unique
+
+  name        String
+  phone       String
+  image       String?
+  imagePath   String?
+  relation    Relation?
+  dateOfBirth DateTime?
+  location    String?
+  giftedCoins Int?      @default(0)
+
+  pushNotification Boolean? @default(true)
+  dailyReminders   Boolean? @default(true)
+  childTaskUpdates Boolean? @default(true)
+
+  user     User           @relation(fields: [userId], references: [id])
+  children ChildProfile[]
+
+  @@index([userId])
+  @@index([name]) // Parent searching by name
+}
+
+model ChildProfile {
+  id       String @id @default(uuid())
+  userId   String @unique
+  parentId String
+
+  accountType ChildAccountType @default(MODERATOR)
+  name        String
+  gender      Gender?
+  phone       String?
+  email       String?
+  dateOfBirth DateTime?
+  location    String?
+  image       String?
+  imagePath   String?
+
+  coins    Int     @default(0)
+  relation String?
+
+  editProfile   Boolean @default(true)
+  createGoals   Boolean @default(true)
+  approveTasks  Boolean @default(true)
+  deleteGoals   Boolean @default(false)
+  deleteAccount Boolean @default(false)
+
+  goals        GoalAssignment[]
+  parent       ParentProfile    @relation(fields: [parentId], references: [id])
+  user         User             @relation(fields: [userId], references: [id])
+  avatarId     String?
+  avatar       Avatar?          @relation(fields: [avatarId], references: [id])
+  Notification Notification[]
+  HelpRequest  HelpRequest[]
+  ChildAsset   ChildAsset[]
+  PushToken    PushToken[]
+  auditLogs    AuditLog[]
+
+  @@index([parentId]) // Fetch children for parent quickly
+  @@index([name]) // Useful for searching child by name
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum ChildAccountType {
+  ADMIN
+  MODERATOR
+  VIEWER
+}
+
+model Goal {
+  id         String     @id @default(uuid())
+  authorId   String
+  authorRole AuthorRole @default(PARENT)
+
+  title       String
+  description String?
+  type        GoalType   @default(ONE_TIME)
+  status      GoalStatus @default(ACTIVE)
+  rewardCoins Int        @default(0)
+  startDate   DateTime?
+  endDate     DateTime?
+  durationMin Int?
+  progress    Int        @default(0)
+  createdAt   DateTime   @default(now())
+
+  author           User             @relation(fields: [authorId], references: [id])
+  assignedChildren GoalAssignment[]
+  Notification     Notification[]
+  HelpRequest      HelpRequest[]
+
+  // 🔥 Indexes for fast filtering & searching
+  @@index([authorId])
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+  @@index([title])
+}
+
+model GoalAssignment {
+  id      String @id @default(uuid())
+  goalId  String
+  childId String
+
+  goal  Goal         @relation(fields: [goalId], references: [id])
+  child ChildProfile @relation(fields: [childId], references: [id])
+
+  @@unique([goalId, childId])
+  @@index([goalId])
+  @@index([childId])
+}
+
+enum AuthorRole {
+  PARENT
+  CHILD
+}
+
+enum GoalStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum GoalType {
+  ONE_TIME
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+model Notification {
+  id            String  @id @default(uuid())
+  parentId      String?
+  childId       String?
+  goalId        String?
+  helpRequestId String?
+  assetId       String?
+
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  parent      User?         @relation(fields: [parentId], references: [id])
+  child       ChildProfile? @relation(fields: [childId], references: [id])
+  goal        Goal?         @relation(fields: [goalId], references: [id])
+  helpRequest HelpRequest?  @relation(fields: [helpRequestId], references: [id])
+  asset       Asset?        @relation(fields: [assetId], references: [id])
+}
+
+enum NotificationType {
+  GOAL_CREATED
+  GOAL_UPDATED
+  GOAL_COMPLETED
+
+  HELP_REQUEST
+  HELP_REQUEST_ACCEPTED
+  HELP_REQUEST_REJECTED
+
+  REWARD_UNLOCKED
+
+  DAILY_REMINDER
+  CHILD_PROGRESS_UPDATE
+}
+
+model HelpRequest {
+  id       String @id @default(uuid())
+  childId  String
+  parentId String
+  goalId   String
+
+  message String? // initial message from child
+  status  HelpStatus @default(PENDING)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  status USER_STATUS @default(active)
+  // Relations
+  child  ChildProfile @relation(fields: [childId], references: [id])
+  parent User         @relation(fields: [parentId], references: [id])
+  goal   Goal         @relation(fields: [goalId], references: [id])
+
+  replies       HelpRequestMessage[]
+  notifications Notification[]
 }
 
-enum USER_STATUS {
-  active
-  blocked
+model HelpRequestMessage {
+  id            String   @id @default(uuid())
+  helpRequestId String
+  senderId      String
+  senderRole    UserRole
+  message       String
+  createdAt     DateTime @default(now())
+
+  helpRequest HelpRequest @relation(fields: [helpRequestId], references: [id])
+  sender      User        @relation(fields: [senderId], references: [id])
+
+  @@index([helpRequestId])
+  @@index([senderId])
 }
 
-enum USER_ROLE {
-  customer
-  admin
+enum HelpStatus {
+  PENDING
+  ACTIVE
+  RESOLVED
+  CLOSED
 }
 
-enum ORGANISATION_ROLE {
-  advertiser
-  agency
+enum AssetCategory {
+  SKIN
+  HAIR
+  EYES
+  NOSE
+  DRESS
+  SHOES
+  ACCESSORY
+  JEWELRY
+  PET
+  AVATAR_BASE
 }
 
-model Screen {
-  id           String              @id @default(uuid())
-  adminId      String
-  slug         String
-  screen_name  String
-  screen_size  String
-  description  String
-  resolution   String
-  lat          String
-  lng          String
-  img_url      String
-  price        Float
-  duration     String
-  availability SCREEN_AVAILABILITY
-  status       SCREEN_STATUS
-  location     String
-  admin        User                @relation("UserScreens", fields: [adminId], references: [id])
-  bundles      Bundle[]            @relation("BundleScreens")
+enum AssetGender {
+  MALE
+  FEMALE
+  UNISEX
 }
 
-enum SCREEN_AVAILABILITY {
-  available
-  maintenance
+model ChildAsset {
+  id        String   @id @default(uuid())
+  childId   String
+  assetId   String
+  createdAt DateTime @default(now())
+
+  child ChildProfile @relation(fields: [childId], references: [id])
+  asset Asset        @relation(fields: [assetId], references: [id])
+
+  @@unique([childId, assetId])
 }
 
-enum SCREEN_STATUS {
-  active
-  occupied
+enum AvatarGender {
+  MALE
+  FEMALE
 }
 
-model Bundle {
-  id          String        @id @default(uuid())
-  adminId     String
-  bundle_name String
-  screens     Screen[]      @relation("BundleScreens")
-  img_url     String
-  price       Float
-  duration    String
-  status      BUNDLE_STATUS
-  location    String
-  admin       User          @relation("UserBundles", fields: [adminId], references: [id])
+model Asset {
+  id        String        @id @default(uuid())
+  name      String
+  category  AssetCategory
+  style     String?
+  colorName String?
+  image     String
+  imagePath String?
+  price     Int
+
+  origin String?
+  gender AssetGender?
+
+  avatarId String?
+  avatar   Avatar? @relation(fields: [avatarId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  unlockedBy   ChildAsset[]
+  Notification Notification[]
 }
 
-enum BUNDLE_STATUS {
-  ongoing
-  expired
+model Avatar {
+  id    String @id @default(uuid())
+  name  String
+  image String // base avatar image (skeleton/face)
+
+  origin String? // e.g., Asia, Europe, Bangladesh, USA
+  gender AvatarGender
+
+  createdAt DateTime @default(now())
+
+  assets Asset[] // all assets belonging to this avatar
+  usedBy ChildProfile[] // children using this avatar
+}
+
+model PushToken {
+  id      String  @id @default(uuid())
+  userId  String?
+  childId String?
+
+  token     String   @unique
+  platform  Platform // ANDROID, IOS
+  createdAt DateTime @default(now())
+
+  user  User?         @relation(fields: [userId], references: [id])
+  child ChildProfile? @relation(fields: [childId], references: [id])
+
+  @@index([userId])
+  @@index([childId])
+}
+
+enum Platform {
+  ANDROID
+  IOS
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  childId   String?
+  action    String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  user  User?         @relation(fields: [userId], references: [id])
+  child ChildProfile? @relation(fields: [childId], references: [id])
 }
