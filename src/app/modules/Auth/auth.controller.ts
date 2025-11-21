@@ -1,7 +1,12 @@
+import { User } from "@prisma/client";
 import { Request, RequestHandler } from "express";
-import catchAsync from "../../../shared/catchAsync";
-import sendResponse from "../../../shared/sendResponse";
+import fs from 'fs/promises';
 import status from "http-status";
+import catchAsync from "../../../shared/catchAsync";
+import prisma from "../../../shared/prisma";
+import sendResponse from "../../../shared/sendResponse";
+import { uploadImageToSupabase } from "../../../utils/UploadFileToSupabase";
+import AppError from "../../Errors/AppError";
 import { UserService } from "./auth.service";
 
 const createUser: RequestHandler = catchAsync(async (req, res) => {
@@ -10,7 +15,89 @@ const createUser: RequestHandler = catchAsync(async (req, res) => {
   sendResponse(res, {
     statusCode: status.OK,
     success: true,
-    message: "User Registration Successfuly. Please verify your email.",
+    message: "OTP has been sent to your email. Please verify your email.",
+    data: result,
+  });
+});
+const createChild: RequestHandler = catchAsync(async (req, res) => {
+  const payload = { ...req.body };
+  payload.userId = (req as Request & { user?: User }).user?.id;
+  if (!payload.userId) {
+    throw new AppError(status.UNAUTHORIZED, "Unauthorized access");
+  }
+
+  if (req?.file) {
+    try {
+      const ImageName = `Image-${Date.now()}`;
+      const { url: imageLink, path: imagePath } = await uploadImageToSupabase(req.file, ImageName);
+      payload.image = imageLink;
+      payload.imagePath = imagePath;
+
+      await fs.unlink(req.file.path).catch((err) => {
+        if (err) {
+          console.error("❌ Error deleting local file:", err.message || err);
+        }
+      });
+    } catch (err) {
+      console.error("❌ Upload error:", err);
+      res.status(500).json({ success: false, message: "Image upload failed" });
+    }
+  }
+
+  const result = await UserService.createChild(payload);
+
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: "Child Registration Successful.",
+    data: result,
+  });
+});
+const updateChild: RequestHandler = catchAsync(async (req, res) => {
+
+  const { childId } = req.query;
+req.body.childId = childId
+
+  if (req?.file) {
+    try {
+      const childProfile = await prisma.childProfile.findFirst({
+        where: { id: childId as string },
+      });
+      if (!childProfile) {
+        throw new AppError(status.NOT_FOUND, "Child not found");
+      }
+
+      const oldPath = childProfile?.imagePath
+      const ImageName = `Image-${Date.now()}`;
+
+      if (oldPath) {
+        const { url: imageLink, path: imagePath } = await uploadImageToSupabase(req.file, ImageName, oldPath);
+        req.body.image = imageLink;
+        req.body.imagePath = imagePath;
+      }
+      else {
+        const { url: imageLink, path: imagePath } = await uploadImageToSupabase(req.file, ImageName);
+        req.body.image = imageLink;
+        req.body.imagePath = imagePath;
+      }
+
+      await fs.unlink(req.file.path).catch((err) => {
+        if (err) {
+          console.error("❌ Error deleting local file:", err.message || err);
+        }
+      });
+    } catch (err) {
+      console.error("❌ Upload error:", err);
+      res.status(500).json({ success: false, message: "Child Update failed" });
+    }
+  }
+  const result = await UserService.updateChild(req.body);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: "Child updated successfully.",
     data: result,
   });
 });
@@ -34,11 +121,11 @@ const verifyOtp: RequestHandler = catchAsync(async (req, res) => {
     data: result,
   });
 });
-const changePassword: RequestHandler = catchAsync(async (req:Request & {user?:any}, res) => {
+const changePassword: RequestHandler = catchAsync(async (req: Request & { user?: any }, res) => {
 
-  const payload={
-    ...req.body, 
-    id:req.user?.id
+  const payload = {
+    ...req.body,
+    id: req.user?.id
   }
 
 
@@ -64,13 +151,13 @@ const loginUser: RequestHandler = catchAsync(async (req, res) => {
   sendResponse(res, {
     statusCode: status.OK,
     success: true,
-    message: "User Login Successfuly.",
+    message: "User Login Successful.",
     data: result,
   });
 });
 
 const refreshToken: RequestHandler = catchAsync(async (req, res) => {
-  const refreshToken = req.cookies.refreshToken; 
+  const refreshToken = req.cookies.refreshToken;
   console.log({ refreshToken });
 
   const result = await UserService.refreshAccessToken(refreshToken);
@@ -95,6 +182,9 @@ const requestPasswordReset: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 const resetPassword: RequestHandler = catchAsync(async (req, res) => {
+
+
+
   const result = await UserService.resetPassword(req.body);
 
   sendResponse(res, {
@@ -118,5 +208,7 @@ export const UserController = {
   verifyOtp,
   changePassword,
   requestPasswordReset,
-  resetPassword
+  resetPassword,
+  createChild,
+  updateChild
 };
