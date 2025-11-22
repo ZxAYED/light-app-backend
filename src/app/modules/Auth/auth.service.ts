@@ -36,7 +36,7 @@ const createUser = async (payload: CreateUserInput) => {
       data: {
         email: payload.email,
         password: hashedPassword,
-        role: "PARENT",
+        role: UserRole.PARENT,
         otp,
         otp_expires_at: otpExpiresAt,
         is_verified: false,
@@ -491,7 +491,23 @@ const data = {
   });
   return result;
 };
+const getAllChild =async (id:string)=>{
 
+  const user = await prisma.user.findUnique({
+    where: { id },
+  });
+  if(!user){
+    throw new AppError(status.NOT_FOUND, "User not found");
+  }
+  const result = await prisma.parentProfile.findUnique({
+    where: { userId:user.id },
+    select:{
+      children:true
+    }
+
+  });
+  return result;
+}
 
 export const UserService = {
   createUser,
@@ -503,5 +519,6 @@ export const UserService = {
   requestPasswordReset,
   resetPassword,
   createChild,
-  updateChild
+  updateChild,
+  getAllChild
 };

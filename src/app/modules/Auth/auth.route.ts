@@ -34,4 +34,6 @@ router.post(
   UserController.changePassword
 );
 
+router.get('/get-all-child', RoleValidation(UserRole.PARENT), UserController.getAllChild)
+
 export const AuthRoutes = router;

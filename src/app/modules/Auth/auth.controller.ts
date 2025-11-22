@@ -194,9 +194,16 @@ const resetPassword: RequestHandler = catchAsync(async (req, res) => {
     data: result,
   });
 });
+const getAllChild: RequestHandler = catchAsync(async (req: Request & { user?: User } , res) => {
+  const result = await UserService.getAllChild(req.user?.id!);
 
-
-
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: "Children retrieved successfully.",
+    data: result,
+  });
+});
 
 
 
@@ -210,5 +217,6 @@ export const UserController = {
   requestPasswordReset,
   resetPassword,
   createChild,
-  updateChild
+  updateChild,
+  getAllChild
 };

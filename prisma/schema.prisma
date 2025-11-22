@@ -6,7 +6,6 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -89,8 +88,8 @@ model ChildProfile {
   relation String?
 
   editProfile   Boolean @default(true)
-  createGoals   Boolean @default(true)
-  approveTasks  Boolean @default(true)
+  createGoals   Boolean @default(false)
+  approveTasks  Boolean @default(false)
   deleteGoals   Boolean @default(false)
   deleteAccount Boolean @default(false)
 
@@ -105,7 +104,8 @@ model ChildProfile {
   PushToken    PushToken[]
   auditLogs    AuditLog[]
 
-  @@index([parentId]) // Fetch children for parent quickly
+  @@index([parentId]) 
+  @@index([userId]) 
   @@index([name]) // Useful for searching child by name
 }
 
@@ -135,6 +135,11 @@ model Goal {
   durationMin Int?
   progress    Int        @default(0)
   createdAt   DateTime   @default(now())
+  updatedAt   DateTime?   @updatedAt
+
+isDeleted  Boolean?    @default(false)
+
+  // Relations
 
   author           User             @relation(fields: [authorId], references: [id])
   assignedChildren GoalAssignment[]

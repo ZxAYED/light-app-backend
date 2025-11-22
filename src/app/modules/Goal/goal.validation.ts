@@ -16,7 +16,7 @@ export const GoalTypeEnum = z.enum([
 
 export const createGoalSchema = z.object({
   title: z.string().min(1, "Title is required"),
-  description: z.string().optional(),
+  description: z.string(),
 
   type: GoalTypeEnum.default("ONE_TIME"),
 
@@ -24,9 +24,9 @@ export const createGoalSchema = z.object({
 
   rewardCoins: z.number().default(0),
 
-  startDate: z.string().optional(),
+  startDate: z.string(),
   endDate: z.string().optional(),
-  durationMin: z.number().optional(),
+  durationMin: z.number(),
 
   assignedChildren: z.array(z.string().uuid()).min(1, "At least one child required"),
 });
@@ -40,4 +40,11 @@ export const updateGoalSchema = z.object({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   durationMin: z.number().optional(),
+  assignedChildIds: z.array(z.string().uuid()).optional(),
+  isDeleted: z.boolean().optional(),
+  progress: z.number().optional(),
 });
+
+
+export type CreateGoalInput = z.infer<typeof createGoalSchema>;
+export type UpdateGoalInput = z.infer<typeof updateGoalSchema>;

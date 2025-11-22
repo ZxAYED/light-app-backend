@@ -2,6 +2,9 @@
 CREATE TYPE "UserRole" AS ENUM ('PARENT', 'CHILD', 'ADMIN');
 
 -- CreateEnum
+CREATE TYPE "Relation" AS ENUM ('FATHER', 'MOTHER', 'BROTHER', 'SISTER');
+
+-- CreateEnum
 CREATE TYPE "Gender" AS ENUM ('MALE', 'FEMALE');
 
 -- CreateEnum
@@ -41,6 +44,11 @@ CREATE TABLE "User" (
     "password" TEXT NOT NULL,
     "role" "UserRole" NOT NULL DEFAULT 'PARENT',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "otp" TEXT,
+    "otp_expires_at" TIMESTAMP(3),
+    "is_verified" BOOLEAN NOT NULL DEFAULT false,
+    "password_reset_otp" TEXT,
+    "password_reset_expires" TIMESTAMP(3),
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
@@ -51,8 +59,9 @@ CREATE TABLE "ParentProfile" (
     "userId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "phone" TEXT NOT NULL,
-    "image" TEXT NOT NULL,
-    "gender" "Gender",
+    "image" TEXT,
+    "imagePath" TEXT,
+    "relation" "Relation",
     "dateOfBirth" TIMESTAMP(3),
     "location" TEXT,
     "giftedCoins" INTEGER DEFAULT 0,
@@ -75,7 +84,8 @@ CREATE TABLE "ChildProfile" (
     "email" TEXT,
     "dateOfBirth" TIMESTAMP(3),
     "location" TEXT,
-    "image" TEXT NOT NULL,
+    "image" TEXT,
+    "imagePath" TEXT,
     "coins" INTEGER NOT NULL DEFAULT 0,
     "relation" TEXT,
     "editProfile" BOOLEAN NOT NULL DEFAULT true,
@@ -177,7 +187,8 @@ CREATE TABLE "Asset" (
     "style" TEXT,
     "colorName" TEXT,
     "image" TEXT NOT NULL,
-    "price" INTEGER,
+    "imagePath" TEXT,
+    "price" INTEGER NOT NULL,
     "origin" TEXT,
     "gender" "AssetGender",
     "avatarId" TEXT,
