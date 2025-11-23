@@ -19,7 +19,7 @@ router.post(
   UserController.createChild
 );
 
-router.patch("/update-child/:childId", RoleValidation(UserRole.CHILD), validateResource(updateChildSchema), upload.single("file"), validateFormData(updateChildSchema),UserController.updateChild);
+router.patch("/update-child/:childId",upload.single("file"), RoleValidation(UserRole.CHILD),  validateFormData(updateChildSchema),UserController.updateChild);
 
 router.post("/resend-otp", UserController.resendOtp);
 router.post("/verify-otp", UserController.verifyOtp);
@@ -34,4 +34,9 @@ router.post(
   UserController.changePassword
 );
 
+router.get('/get-all-child', RoleValidation(UserRole.PARENT), UserController.getAllChild)
+router.get('/get-all-siblings', RoleValidation(UserRole.CHILD), UserController.getAllSiblings)
+
+router.delete('/delete-child/:childId', RoleValidation(UserRole.PARENT), UserController.deleteChild)
+router.delete('/delete-parent', RoleValidation(UserRole.PARENT), UserController.deleteParent)
 export const AuthRoutes = router;

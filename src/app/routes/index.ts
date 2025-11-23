@@ -1,5 +1,6 @@
 import express from "express";
 import { AuthRoutes } from "../modules/Auth/auth.route";
+import { GoalRoutes } from "../modules/Goal/goal.routes";
 
 
 
@@ -9,6 +10,11 @@ const moduleRoutes = [
   {
     path: "/auth",
     route: AuthRoutes,
+  },
+  {
+    path: "/goals",
+    route: GoalRoutes,
+
   },
 
   

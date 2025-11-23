@@ -56,13 +56,13 @@ const createChild: RequestHandler = catchAsync(async (req, res) => {
 });
 const updateChild: RequestHandler = catchAsync(async (req, res) => {
 
-  const { childId } = req.query;
-req.body.childId = childId
+  
+req.body.childId = req.params.childId as string
 
   if (req?.file) {
     try {
       const childProfile = await prisma.childProfile.findFirst({
-        where: { id: childId as string },
+        where: { id: req.params.childId as string },
       });
       if (!childProfile) {
         throw new AppError(status.NOT_FOUND, "Child not found");
@@ -73,6 +73,7 @@ req.body.childId = childId
 
       if (oldPath) {
         const { url: imageLink, path: imagePath } = await uploadImageToSupabase(req.file, ImageName, oldPath);
+  
         req.body.image = imageLink;
         req.body.imagePath = imagePath;
       }
@@ -195,20 +196,61 @@ const resetPassword: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+const deleteChild: RequestHandler = catchAsync(async (req, res) => {
+  const result = await UserService.deleteChild(req.params.childId);
 
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: "Child deleted successfully.",
+    data: result,
+  });
+});
+const deleteParent: RequestHandler = catchAsync(async (req: Request & { user?: User }, res) => {
+  const result = await UserService.deleteParent(req?.user?.id!);
 
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: "Parent deleted successfully.",
+    data: result,
+  });
+});
+const  getAllChild = catchAsync(async (req: Request & { user?: User }, res) => {
+  const result = await UserService.getAllChild(req?.user?.id!);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: "Child fetched successfully.",
+    data: result,
+  });
+})
+const  getAllSiblings = catchAsync(async (req: Request & { user?: User }, res) => {
+  const result = await UserService.getAllSiblings(req?.user?.id!);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: "Siblings fetched successfully.",
+    data: result,
+  });
+})
 
 
 
 export const UserController = {
   createUser,
-  loginUser,
+  loginUser,getAllSiblings,
   refreshToken,
+  getAllChild,
   resendOtp,
+  deleteParent,
   verifyOtp,
   changePassword,
   requestPasswordReset,
   resetPassword,
   createChild,
-  updateChild
+  updateChild,
+  deleteChild
 };

@@ -92,5 +92,8 @@ export const updateChildSchema = z.object({
   phone: z.string().optional(),
   dateOfBirth: z.string().optional(),
   location: z.string().optional(),
+  relation: z.string().optional(),
+  accountType: ChildAccountTypeEnum.optional(),
+  
 });
 export type CreateChildInput = z.infer<typeof createChildSchema>;

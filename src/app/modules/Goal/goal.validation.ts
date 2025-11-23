@@ -28,16 +28,26 @@ export const createGoalSchema = z.object({
   endDate: z.string().optional(),
   durationMin: z.number().optional(),
 
-  assignedChildren: z.array(z.string().uuid()).min(1, "At least one child required"),
+  assignedChildIds: z.array(z.string().uuid()).min(1, "At least one child required"),
 });
 
 export const updateGoalSchema = z.object({
   title: z.string().optional(),
   description: z.string().optional(),
-  status: GoalStatusEnum.optional(),
+ 
+      status: GoalStatusEnum.optional(),
+ 
   type: GoalTypeEnum.optional(),
   rewardCoins: z.number().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   durationMin: z.number().optional(),
+
+  isDeleted:z.boolean().optional(),
+   assignedChildIds: z.array(z.string().uuid()).min(1, "At least one child required").optional(),
+
 });
+
+
+export type CreateGoalInput = z.infer<typeof createGoalSchema>;
+export type UpdateGoalInput = z.infer<typeof updateGoalSchema>;
