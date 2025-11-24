@@ -1,15 +1,14 @@
-import { User, UserRole } from "@prisma/client";
-import { Request, RequestHandler } from "express";
-import status from "http-status";
+import { User } from "@prisma/client";
+import { Request, Response } from "express";
 import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 import AppError from "../../Errors/AppError";
 import { GoalService } from "./goal.service";
 
-const createGoal: RequestHandler = catchAsync(
-  async (req: Request & { user?: User }, res) => {
-    if (!req.user?.id)
-      throw new AppError(status.UNAUTHORIZED, "Unauthorized access");
+export const GoalController = {
+
+  createGoal: catchAsync(async (req: Request & { user?: User }, res: Response) => {
+    if (!req.user) throw new AppError(401, "Unauthorized");
 
     const payload = {
       ...req.body,
@@ -20,20 +19,18 @@ const createGoal: RequestHandler = catchAsync(
     const result = await GoalService.createGoal(payload);
 
     sendResponse(res, {
-      statusCode: status.OK,
+      statusCode: 200,
       success: true,
-      message: "Goal created successfully.",
+      message: "Goal created successfully",
       data: result,
     });
-  }
-);
+  }),
 
-const updateGoal: RequestHandler = catchAsync(
-  async (req: Request & { user?: User }, res) => {
-    if (!req.user?.id)
-      throw new AppError(status.UNAUTHORIZED, "Unauthorized access");
+  updateGoal: catchAsync(async (req: Request & { user?: User }, res: Response) => {
+    if (!req.user) throw new AppError(401, "Unauthorized");
 
     const { goalId } = req.params;
+    if (!goalId) throw new AppError(400, "Goal ID missing");
 
     const payload = {
       ...req.body,
@@ -45,71 +42,58 @@ const updateGoal: RequestHandler = catchAsync(
     const result = await GoalService.updateGoal(payload);
 
     sendResponse(res, {
-      statusCode: status.OK,
+      statusCode: 200,
       success: true,
-      message: "Goal updated successfully.",
+      message: "Goal updated successfully",
       data: result,
     });
-  }
-);
+  }),
 
-const getParentGoals: RequestHandler = catchAsync(
-  async (req: Request & { user?: any }, res) => {
-    if (req.user.role !== UserRole.PARENT){
-      throw new AppError(status.UNAUTHORIZED, "Only Parents can view goals of their own created goals for children");
-    }      
+  getParentGoals: catchAsync(async (req: Request & { user?: User }, res: Response) => {
+    if (!req.user) throw new AppError(401, "Unauthorized");
 
     const result = await GoalService.getParentGoals(req.user.id);
 
     sendResponse(res, {
-      statusCode: status.OK,
+      statusCode: 200,
       success: true,
-      message: "Parent goals fetched successfully.",
+      message: "Parent goals fetched successfully",
       data: result,
     });
-  }
-);
+  }),
 
-const getChildGoals: RequestHandler = catchAsync(
-  async (req: Request & { user?: any }, res) => {
-    if (req.user.role !== UserRole.CHILD) {
-      throw new AppError(status.UNAUTHORIZED, "Only children can view goals assigned to them");
-    }
+  getChildGoals: catchAsync(async (req: Request & { user?: User }, res: Response) => {
+    if (!req.user) throw new AppError(401, "Unauthorized");
 
     const result = await GoalService.getChildGoals(req.user.id);
 
     sendResponse(res, {
-      statusCode: status.OK,
+      statusCode: 200,
       success: true,
-      message: "Child goals fetched successfully.",
+      message: "Child goals fetched successfully",
       data: result,
     });
-  }
-);
+  }),
 
-const updateProgress: RequestHandler = catchAsync(
-  async (req: Request & { user?: any }, res) => {
+  updateProgress: catchAsync(async (req: Request & { user?: User }, res: Response) => {
+    if (!req.user) throw new AppError(401, "Unauthorized");
+
+    const { goalId } = req.params;
+    if (!goalId) throw new AppError(400, "Goal ID missing");
+
     const payload = {
-      goalId: req.params.goalId,
-      minutesCompleted: req.body.minutesCompleted,
+      goalId,
       userId: req.user.id,
+      ...req.body,
     };
 
     const result = await GoalService.updateProgress(payload);
 
     sendResponse(res, {
-      statusCode: status.OK,
+      statusCode: 200,
       success: true,
-      message: "Progress updated successfully.",
+      message: "Progress updated successfully",
       data: result,
     });
-  }
-);
-
-export const GoalController = {
-  createGoal,
-  updateGoal,
-  getParentGoals,
-  getChildGoals,
-  updateProgress,
+  }),
 };

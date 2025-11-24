@@ -107,6 +107,9 @@ model Goal {
   progressAvg      Int?             @default(0)
   createdAt        DateTime         @default(now())
   isDeleted        Boolean          @default(false)
+  isRecurring   Boolean? @default(false)
+nextResetAt   DateTime?
+
   author           User             @relation(fields: [authorId], references: [id])
   assignedChildren GoalAssignment[]
   HelpRequest      HelpRequest[]

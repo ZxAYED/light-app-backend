@@ -1,53 +1,49 @@
-import { z } from "zod";
-
-export const GoalStatusEnum = z.enum([
-  "ACTIVE",
-  "PAUSED",
-  "COMPLETED",
-  "CANCELLED",
-]);
-
-export const GoalTypeEnum = z.enum([
-  "ONE_TIME",
-  "DAILY",
-  "WEEKLY",
-  "MONTHLY",
-]);
+import { GoalStatus, GoalType } from "@prisma/client";
+import * as z from "zod";
 
 export const createGoalSchema = z.object({
-  title: z.string().min(1, "Title is required"),
+  title: z.string().min(1),
   description: z.string().optional(),
 
-  type: GoalTypeEnum.default("ONE_TIME"),
+  type: z.nativeEnum(GoalType),
+  status: z.nativeEnum(GoalStatus).optional(),
 
-  status: GoalStatusEnum.default("ACTIVE"),
-
-  rewardCoins: z.number().default(0),
+  rewardCoins: z.number().min(0),
+  durationMin: z.number().min(1),
 
   startDate: z.string().optional(),
   endDate: z.string().optional(),
-  durationMin: z.number().optional(),
 
-  assignedChildIds: z.array(z.string().uuid()).min(1, "At least one child required"),
+  assignedChildIds: z.array(z.string()).min(1),
+
+  isRecurring: z.boolean().optional(),
 });
+
+export type CreateGoalInput = z.infer<typeof createGoalSchema>;
 
 export const updateGoalSchema = z.object({
   title: z.string().optional(),
   description: z.string().optional(),
- 
-      status: GoalStatusEnum.optional(),
- 
-  type: GoalTypeEnum.optional(),
-  rewardCoins: z.number().optional(),
+
+  type: z.nativeEnum(GoalType).optional(),
+  status: z.nativeEnum(GoalStatus).optional(),
+
+  rewardCoins: z.number().min(0).optional(),
+  durationMin: z.number().min(1).optional(),
+
   startDate: z.string().optional(),
   endDate: z.string().optional(),
-  durationMin: z.number().optional(),
 
-  isDeleted:z.boolean().optional(),
-   assignedChildIds: z.array(z.string().uuid()).min(1, "At least one child required").optional(),
+  assignedChildIds: z.array(z.string()).optional(),
 
+  isDeleted: z.boolean().optional(),
+  isRecurring: z.boolean().optional(),
 });
 
-
-export type CreateGoalInput = z.infer<typeof createGoalSchema>;
 export type UpdateGoalInput = z.infer<typeof updateGoalSchema>;
+
+export const updateProgressSchema = z.object({
+  minutesCompleted: z.number().min(1),
+});
+
+export type UpdateProgressInput = z.infer<typeof updateProgressSchema>;
