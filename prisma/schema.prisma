@@ -55,36 +55,37 @@ model ParentProfile {
 }
 
 model ChildProfile {
-  id            String           @id @default(uuid())
-  userId        String           @unique
-  parentId      String
-  accountType   ChildAccountType @default(MODERATOR)
-  name          String
-  gender        Gender?
-  phone         String?
-  email         String?
-  dateOfBirth   DateTime?
-  location      String?
-  image         String?
-  imagePath     String?
-  coins         Int              @default(0)
-  relation      String?
-  editProfile   Boolean          @default(true)
-  createGoals   Boolean          @default(true)
-  approveTasks  Boolean          @default(true)
-  deleteGoals   Boolean          @default(false)
-  deleteAccount Boolean          @default(false)
-  avatarId      String?
-  isDeleted     Boolean?         @default(false)
-  auditLogs     AuditLog[]
-  ChildAsset    ChildAsset[]
-  avatar        Avatar?          @relation(fields: [avatarId], references: [id])
-  parent        ParentProfile    @relation(fields: [parentId], references: [id])
-  user          User             @relation(fields: [userId], references: [id])
-  goals         GoalAssignment[]
-  HelpRequest   HelpRequest[]
-  Notification  Notification[]
-  PushToken     PushToken[]
+  id               String            @id @default(uuid())
+  userId           String            @unique
+  parentId         String
+  accountType      ChildAccountType  @default(MODERATOR)
+  name             String
+  gender           Gender?
+  phone            String?
+  email            String?
+  dateOfBirth      DateTime?
+  location         String?
+  image            String?
+  imagePath        String?
+  coins            Int               @default(0)
+  relation         String?
+  editProfile      Boolean           @default(true)
+  createGoals      Boolean           @default(true)
+  approveTasks     Boolean           @default(true)
+  deleteGoals      Boolean           @default(false)
+  deleteAccount    Boolean           @default(false)
+  avatarId         String?
+  isDeleted        Boolean?          @default(false)
+  auditLogs        AuditLog[]
+  ChildAsset       ChildAsset[]
+  avatar           Avatar?           @relation(fields: [avatarId], references: [id])
+  parent           ParentProfile     @relation(fields: [parentId], references: [id])
+  user             User              @relation(fields: [userId], references: [id])
+  goals            GoalAssignment[]
+  HelpRequest      HelpRequest[]
+  Notification     Notification[]
+  PushToken        PushToken[]
+  goalProgressLogs GoalProgressLog[]
 
   @@index([parentId])
   @@index([userId])
@@ -92,28 +93,29 @@ model ChildProfile {
 }
 
 model Goal {
-  id               String           @id @default(uuid())
-  authorId         String
-  authorRole       AuthorRole       @default(PARENT)
-  title            String
-  description      String?
-  type             GoalType         @default(ONE_TIME)
-  status           GoalStatus       @default(ACTIVE)
-  rewardCoins      Int              @default(0)
-  startDate        DateTime?
-  endDate          DateTime?
-  durationMin      Int?
-  progress         Int?             @default(0)
-  progressAvg      Int?             @default(0)
-  createdAt        DateTime         @default(now())
-  isDeleted        Boolean          @default(false)
-  isRecurring   Boolean? @default(false)
-nextResetAt   DateTime?
+  id          String     @id @default(uuid())
+  authorId    String
+  authorRole  AuthorRole @default(PARENT)
+  title       String
+  description String?
+  type        GoalType   @default(ONE_TIME)
+  status      GoalStatus @default(ACTIVE)
+  rewardCoins Int        @default(0)
+  startDate   DateTime?
+  endDate     DateTime?
+  durationMin Int?
+  progress    Int?       @default(0)
+  progressAvg Int?       @default(0)
+  createdAt   DateTime   @default(now())
+  isDeleted   Boolean    @default(false)
+  isRecurring Boolean?   @default(false)
+  nextResetAt DateTime?
 
-  author           User             @relation(fields: [authorId], references: [id])
+  author           User              @relation(fields: [authorId], references: [id])
   assignedChildren GoalAssignment[]
   HelpRequest      HelpRequest[]
   Notification     Notification[]
+  goalProgressLogs GoalProgressLog[]
 
   @@index([authorId])
   @@index([status])
@@ -127,12 +129,12 @@ model GoalAssignment {
   goalId  String
   childId String
 
-minutesCompleted Int @default(0)    // raw minutes
-  progress         Int @default(0)    // percentage
+  minutesCompleted Int @default(0) // raw minutes
+  progress         Int @default(0) // percentage
 
-  percentage       Int       @default(0) // % progress (0–100)
-  lastResetAt      DateTime? // when this child last reset
-  lastUpdatedAt    DateTime  @updatedAt
+  percentage    Int       @default(0) // % progress (0–100)
+  lastResetAt   DateTime? // when this child last reset
+  lastUpdatedAt DateTime  @updatedAt
 
   isDeleted Boolean      @default(false)
   child     ChildProfile @relation(fields: [childId], references: [id])
@@ -142,6 +144,7 @@ minutesCompleted Int @default(0)    // raw minutes
   @@index([goalId])
   @@index([childId])
 }
+
 model GoalProgressLog {
   id        String   @id @default(uuid())
   goalId    String
@@ -150,8 +153,8 @@ model GoalProgressLog {
   percent   Int
   createdAt DateTime @default(now())
 
-  goal      Goal         @relation(fields: [goalId], references: [id])
-  child     ChildProfile @relation(fields: [childId], references: [id])
+  goal  Goal         @relation(fields: [goalId], references: [id])
+  child ChildProfile @relation(fields: [childId], references: [id])
 
   @@index([goalId])
   @@index([childId])
