@@ -237,11 +237,21 @@ const  getAllSiblings = catchAsync(async (req: Request & { user?: User }, res) =
     data: result,
   });
 })
+const  getProfile = catchAsync(async (req: Request & { user?: User }, res) => {
+  const result = await UserService.getProfile(req?.user!);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: "Profile fetched successfully.",
+    data: result,
+  });
+})
 
 
 
 export const UserController = {
-  createUser,
+  createUser,getProfile,
   loginUser,getAllSiblings,
   refreshToken,
   getAllChild,

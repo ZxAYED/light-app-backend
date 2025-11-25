@@ -35,6 +35,7 @@ router.post(
 );
 
 router.get('/get-all-child', RoleValidation(UserRole.PARENT), UserController.getAllChild)
+router.get('/get-profile', RoleValidation(UserRole.PARENT,UserRole.CHILD,UserRole.ADMIN), UserController.getProfile)
 router.get('/get-all-siblings', RoleValidation(UserRole.CHILD), UserController.getAllSiblings)
 
 router.delete('/delete-child/:childId', RoleValidation(UserRole.PARENT), UserController.deleteChild)

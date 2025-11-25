@@ -7,7 +7,7 @@ import prisma from "../../../shared/prisma";
 import AppError from "../../Errors/AppError";
 
 
-import { UserRole } from "@prisma/client";
+import { User, UserRole } from "@prisma/client";
 import { sendOtpEmail } from "../../../utils/sendOtpEmail";
 import { sendPasswordResetOtp } from "../../../utils/sendResetPasswordOtp";
 import { CreateChildInput, CreateUserInput } from "./auth.validation";
@@ -553,6 +553,38 @@ const getAllChild = async (userId: string) => {
 
   return  children ;
 };
+const getProfile = async (user: User) => {
+  let result
+if(user.role === UserRole.PARENT){
+ result = await prisma.user.findUnique({
+    where: { id: user.id },
+    include: {
+      parentProfile: true,
+    
+    }
+  }) 
+}
+if(user.role === UserRole.CHILD){
+ result = await prisma.user.findUnique({
+    where: { id: user.id },
+    include: {
+    
+      childProfile: true,
+    }
+  }) 
+}
+if(user.role === UserRole.ADMIN){
+ result = await prisma.user.findUnique({
+    where: { id: user.id },
+   
+  }) 
+}
+  
+  
+
+ 
+  return  result ;
+};
 
 
 const getAllSiblings = async (childUserId: string) => {
@@ -591,7 +623,7 @@ const getAllSiblings = async (childUserId: string) => {
 
 export const UserService = {
   createUser,getAllSiblings,
-  loginUser,
+  loginUser,getProfile,
   resendOtp,getAllChild,
   deleteParent,
   refreshAccessToken,
