@@ -24,7 +24,7 @@ router.patch("/update-child/:childId",upload.single("file"), RoleValidation(User
 router.post("/resend-otp", UserController.resendOtp);
 router.post("/verify-otp", UserController.verifyOtp);
 router.post("/login", validateResource(loginSchema), UserController.loginUser);
-router.post("/refresh-token", UserController.refreshToken);
+router.post("/refresh-token",RoleValidation(UserRole.CHILD, UserRole.PARENT,UserRole.ADMIN), UserController.refreshToken);
 router.post("/reset-password", validateResource(resetPasswordSchema), UserController.resetPassword);
 router.post("/request-reset-password", validateResource(requestPasswordResetSchema), UserController.requestPasswordReset);
 router.post(

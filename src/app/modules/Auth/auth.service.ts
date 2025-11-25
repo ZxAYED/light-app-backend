@@ -208,7 +208,12 @@ const loginUser = async (payload: { email: string; password: string }) => {
   );
 
   const refreshToken = jwtHelpers.generateToken(
-    { email: user.email },
+  {
+      id: user.id,
+      email: user.email,
+      profile,
+      role: user.role,
+    },
     config.jwt.refresh_token_secret as Secret,
     config.jwt.refresh_token_expires_in as string
   );
