@@ -1,6 +1,5 @@
 import { User } from "@prisma/client";
 import { Request, RequestHandler } from "express";
-import fs from 'fs/promises';
 import status from "http-status";
 import catchAsync from "../../../shared/catchAsync";
 import prisma from "../../../shared/prisma";
@@ -19,8 +18,9 @@ const createUser: RequestHandler = catchAsync(async (req, res) => {
     data: result,
   });
 });
+
 const createChild: RequestHandler = catchAsync(async (req, res) => {
-  const payload = { ...req.body };
+  const payload = { ...req.body } as any;
   payload.userId = (req as Request & { user?: User }).user?.id;
   if (!payload.userId) {
     throw new AppError(status.UNAUTHORIZED, "Unauthorized access");
@@ -32,20 +32,14 @@ const createChild: RequestHandler = catchAsync(async (req, res) => {
       const { url: imageLink, path: imagePath } = await uploadImageToSupabase(req.file, ImageName);
       payload.image = imageLink;
       payload.imagePath = imagePath;
-
-      await fs.unlink(req.file.path).catch((err) => {
-        if (err) {
-          console.error("❌ Error deleting local file:", err.message || err);
-        }
-      });
     } catch (err) {
-      console.error("❌ Upload error:", err);
+      console.error("? Upload error:", err);
       res.status(500).json({ success: false, message: "Image upload failed" });
+      return;
     }
   }
 
   const result = await UserService.createChild(payload);
-
 
   sendResponse(res, {
     statusCode: status.OK,
@@ -54,10 +48,9 @@ const createChild: RequestHandler = catchAsync(async (req, res) => {
     data: result,
   });
 });
-const updateChild: RequestHandler = catchAsync(async (req, res) => {
 
-  
-req.body.childId = req.params.childId as string
+const updateChild: RequestHandler = catchAsync(async (req, res) => {
+  req.body.childId = req.params.childId as string;
 
   if (req?.file) {
     try {
@@ -68,29 +61,21 @@ req.body.childId = req.params.childId as string
         throw new AppError(status.NOT_FOUND, "Child not found");
       }
 
-      const oldPath = childProfile?.imagePath
+      const oldPath = childProfile?.imagePath;
       const ImageName = `Image-${Date.now()}`;
 
-      if (oldPath) {
-        const { url: imageLink, path: imagePath } = await uploadImageToSupabase(req.file, ImageName, oldPath);
-  
-        req.body.image = imageLink;
-        req.body.imagePath = imagePath;
-      }
-      else {
-        const { url: imageLink, path: imagePath } = await uploadImageToSupabase(req.file, ImageName);
-        req.body.image = imageLink;
-        req.body.imagePath = imagePath;
-      }
+      const { url: imageLink, path: imagePath } = await uploadImageToSupabase(
+        req.file,
+        ImageName,
+        oldPath || undefined
+      );
 
-      await fs.unlink(req.file.path).catch((err) => {
-        if (err) {
-          console.error("❌ Error deleting local file:", err.message || err);
-        }
-      });
+      req.body.image = imageLink;
+      req.body.imagePath = imagePath;
     } catch (err) {
-      console.error("❌ Upload error:", err);
+      console.error("? Upload error:", err);
       res.status(500).json({ success: false, message: "Child Update failed" });
+      return;
     }
   }
   const result = await UserService.updateChild(req.body);
@@ -102,6 +87,47 @@ req.body.childId = req.params.childId as string
     data: result,
   });
 });
+
+const updateParent: RequestHandler = catchAsync(async (req, res) => {
+  req.body.parentId = req.params.parentId as string;
+
+  if (req?.file) {
+    try {
+      const parentProfile = await prisma.parentProfile.findFirst({
+        where: { id: req.params.parentId as string },
+      });
+      if (!parentProfile) {
+        throw new AppError(status.NOT_FOUND, "Parent not found");
+      }
+
+      const oldPath = parentProfile?.imagePath;
+      const ImageName = `Image-${Date.now()}`;
+
+      const { url: imageLink, path: imagePath } = await uploadImageToSupabase(
+        req.file,
+        ImageName,
+        oldPath || undefined
+      );
+
+      req.body.image = imageLink;
+      req.body.imagePath = imagePath;
+    } catch (err) {
+      console.error("? Upload error:", err);
+      res.status(500).json({ success: false, message: "Parent Update failed" });
+      return;
+    }
+  }
+
+  const result = await UserService.updateParent(req.body);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: "Parent updated successfully.",
+    data: result,
+  });
+});
+
 const resendOtp: RequestHandler = catchAsync(async (req, res) => {
   const result = await UserService.resendOtp(req.body.email);
 
@@ -112,6 +138,7 @@ const resendOtp: RequestHandler = catchAsync(async (req, res) => {
     data: result,
   });
 });
+
 const verifyOtp: RequestHandler = catchAsync(async (req, res) => {
   const result = await UserService.verifyOtp(req.body.email, req.body.otp);
 
@@ -122,13 +149,12 @@ const verifyOtp: RequestHandler = catchAsync(async (req, res) => {
     data: result,
   });
 });
-const changePassword: RequestHandler = catchAsync(async (req: Request & { user?: any }, res) => {
 
+const changePassword: RequestHandler = catchAsync(async (req: Request & { user?: any }, res) => {
   const payload = {
     ...req.body,
-    id: req.user?.id
-  }
-
+    id: req.user?.id,
+  };
 
   const result = await UserService.changePassword(payload);
 
@@ -159,7 +185,6 @@ const loginUser: RequestHandler = catchAsync(async (req, res) => {
 
 const refreshToken: RequestHandler = catchAsync(async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
-  
 
   const result = await UserService.refreshAccessToken(refreshToken);
 
@@ -170,8 +195,6 @@ const refreshToken: RequestHandler = catchAsync(async (req, res) => {
     data: result,
   });
 });
- 
-
 
 const requestPasswordReset: RequestHandler = catchAsync(async (req, res) => {
   const result = await UserService.requestPasswordReset(req.body.email);
@@ -183,10 +206,8 @@ const requestPasswordReset: RequestHandler = catchAsync(async (req, res) => {
     data: result,
   });
 });
+
 const resetPassword: RequestHandler = catchAsync(async (req, res) => {
-
-
-
   const result = await UserService.resetPassword(req.body);
 
   sendResponse(res, {
@@ -207,6 +228,7 @@ const deleteChild: RequestHandler = catchAsync(async (req, res) => {
     data: result,
   });
 });
+
 const deleteParent: RequestHandler = catchAsync(async (req: Request & { user?: User }, res) => {
   const result = await UserService.deleteParent(req?.user?.id!);
 
@@ -217,7 +239,8 @@ const deleteParent: RequestHandler = catchAsync(async (req: Request & { user?: U
     data: result,
   });
 });
-const  getAllChild = catchAsync(async (req: Request & { user?: User }, res) => {
+
+const getAllChild = catchAsync(async (req: Request & { user?: User }, res) => {
   const result = await UserService.getAllChild(req?.user?.id!);
 
   sendResponse(res, {
@@ -226,8 +249,9 @@ const  getAllChild = catchAsync(async (req: Request & { user?: User }, res) => {
     message: "Child fetched successfully.",
     data: result,
   });
-})
-const  getAllSiblings = catchAsync(async (req: Request & { user?: User }, res) => {
+});
+
+const getAllSiblings = catchAsync(async (req: Request & { user?: User }, res) => {
   const result = await UserService.getAllSiblings(req?.user?.id!);
 
   sendResponse(res, {
@@ -236,8 +260,9 @@ const  getAllSiblings = catchAsync(async (req: Request & { user?: User }, res) =
     message: "Siblings fetched successfully.",
     data: result,
   });
-})
-const  getProfile = catchAsync(async (req: Request & { user?: User }, res) => {
+});
+
+const getProfile = catchAsync(async (req: Request & { user?: User }, res) => {
   const result = await UserService.getProfile(req?.user!);
 
   sendResponse(res, {
@@ -246,13 +271,13 @@ const  getProfile = catchAsync(async (req: Request & { user?: User }, res) => {
     message: "Profile fetched successfully.",
     data: result,
   });
-})
-
-
+});
 
 export const UserController = {
-  createUser,getProfile,
-  loginUser,getAllSiblings,
+  createUser,
+  getProfile,
+  loginUser,
+  getAllSiblings,
   refreshToken,
   getAllChild,
   resendOtp,
@@ -263,5 +288,6 @@ export const UserController = {
   resetPassword,
   createChild,
   updateChild,
-  deleteChild
+  deleteChild,
+  updateParent,
 };

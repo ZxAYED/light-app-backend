@@ -10,7 +10,7 @@ import AppError from "../../Errors/AppError";
 import { User, UserRole } from "@prisma/client";
 import { sendOtpEmail } from "../../../utils/sendOtpEmail";
 import { sendPasswordResetOtp } from "../../../utils/sendResetPasswordOtp";
-import { CreateChildInput, CreateUserInput } from "./auth.validation";
+import { CreateChildInput, CreateUserInput } from './auth.validation';
 
 const createUser = async (payload: CreateUserInput) => {
 
@@ -492,6 +492,15 @@ const updateChild = async (payload: Partial<CreateChildInput> & { image?: string
   });
   return result;
 };
+const updateParent = async (payload: Partial<any> & { image?: string, imagePath?: string, parentId?: string }) => {
+  const { parentId, ...others } = payload
+  const result = await prisma.parentProfile.update({
+    where: { id: parentId },
+    data: others,
+
+  });
+  return result;
+};
 const deleteChild = async (childId: string) => {
 
    return  prisma.$transaction(async (tx) => {
@@ -642,5 +651,6 @@ export const UserService = {
   resetPassword,
   createChild,
   updateChild,
+  updateParent,
   deleteChild
 };

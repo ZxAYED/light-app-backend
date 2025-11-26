@@ -1,51 +1,62 @@
 import { createClient } from "@supabase/supabase-js";
+import dotenv from "dotenv";
 import AppError from "../app/Errors/AppError";
-import config from "../config";
+
+dotenv.config();
+
+const BUCKET = process.env.SUPABASE_BUCKET || "shalana07";
 
 export const supabase = createClient(
-  config.SupabseProjectUrl!,
-  config.SupabaseServiceKey!
+  process.env.SUPABASE_PROJECT_URL!,
+  process.env.SUPABSE_SERVICE_KEY!
 );
 
 export async function uploadImageToSupabase(
-
-  newFile: Express.Multer.File,
+  file: Express.Multer.File,
   fileName: string,
-    oldPath?: string | null,
+  oldPath?: string | null
 ) {
-  if (!newFile) {
-    throw new AppError(400, "No file uploaded");
+  const BUCKET = "shalana07";  
+
+ 
+  if (!file || !file.buffer) {
+    throw new AppError(400, "Invalid file. Ensure multer uses memoryStorage.");
   }
+if (!file.buffer) {
+  throw new AppError(400, "File buffer is empty. Multer upload failed.");
+}
+  // Remove old image
+  if (oldPath) {
+    await supabase.storage.from(BUCKET).remove([oldPath]);
+  }
+  const ext = file.originalname.split(".").pop();
+  const newPath = `${fileName}.${ext}`;
 
   // Delete old image if exists
   if (oldPath) {
-    await supabase.storage.from("shalana07").remove([oldPath]);
+    await supabase.storage.from(BUCKET).remove([oldPath]);
   }
 
-  // extension from original file
-  const ext = newFile.originalname.split(".").pop();
-
-  // final path inside bucket/folder
-  const newPath = `${fileName}.${ext}`;
-
-  // Upload buffer
+  // Upload
   const { error } = await supabase.storage
-    .from("shalana07")
-    .upload(newPath, newFile.buffer, {
-      contentType: newFile.mimetype,
-      cacheControl: "3600",
-      upsert: true, // allow replace behavior
+    .from(BUCKET)
+    .upload(newPath, file.buffer, {
+      contentType: file.mimetype,
+      upsert: true,
     });
 
   if (error) throw new AppError(400, error.message);
 
-  // Get public URL
-  const { data: urlData } = supabase.storage
-    .from("shalana07")
-    .getPublicUrl(newPath);
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(newPath);
+console.log("File received:", {
+  originalname: file.originalname,
+  size: file.size,
+  mimetype: file.mimetype,
+  hasBuffer: !!file.buffer
+});
+return {
+  url: `${process.env.SUPABASE_PROJECT_URL}/storage/v1/object/public/${BUCKET}/${newPath}`,
+  path: newPath,
+};
 
-  return {
-    url: urlData.publicUrl,
-    path: newPath,
-  };
 }
