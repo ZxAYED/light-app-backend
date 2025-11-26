@@ -559,7 +559,11 @@ if(user.role === UserRole.PARENT){
  result = await prisma.user.findUnique({
     where: { id: user.id },
     include: {
-      parentProfile: true,
+      parentProfile: {
+        include:{
+          children: true
+        }
+      },
     
     }
   }) 
@@ -567,9 +571,14 @@ if(user.role === UserRole.PARENT){
 if(user.role === UserRole.CHILD){
  result = await prisma.user.findUnique({
     where: { id: user.id },
+  
     include: {
     
-      childProfile: true,
+      childProfile: {
+        include: {
+          parent:true
+        }
+      },
     }
   }) 
 }
