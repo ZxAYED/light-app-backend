@@ -169,10 +169,10 @@ updateGoal: async (
   return goals.map((g) => ({
     ...g,
     averageProgress:
-      g.assignedChildren.reduce((sum, a) => sum + a.progress, 0) /
+      g.assignedChildren.reduce((sum, a) => sum + (a.percentage ?? 0), 0) /
       (g.assignedChildren.length || 1),
-    totalProgress: g.assignedChildren.reduce((sum, a) => sum + a.progress, 0),
-    completedCount: g.assignedChildren.filter((a) => a.progress >= 100).length,
+    totalProgress: g.assignedChildren.reduce((sum, a) => sum + (a.percentage ?? 0), 0),
+    completedCount: g.assignedChildren.filter((a) => (a.percentage ?? 0) >= 100).length,
     totalChildren: g.assignedChildren.length,
   }));
 },
@@ -233,7 +233,7 @@ updateProgress: async (payload: {
       throw new AppError(400, "Goal duration is not set");
 
     // Convert progress % back to minutes
-    let currentMinutes = Math.round((assignment.progress / 100) * duration);
+    let currentMinutes = Math.round(((assignment.percentage ?? 0) / 100) * duration);
 
     // Clamp minutes to avoid cheating
     let newMinutes = Math.min(
@@ -248,22 +248,22 @@ updateProgress: async (payload: {
     const updatedAssignment = await tx.goalAssignment.update({
       where: { id: assignment.id },
       data: {
-        progress: newPercent,
+        percentage: newPercent,
       },
     });
 
     // 4. Recalculate global goal progress (average of all child progresses)
     const allAssignments = await tx.goalAssignment.findMany({
       where: { goalId: payload.goalId, isDeleted: false },
-      select: { progress: true },
+      select: { percentage: true },
     });
 
     const totalChildren = allAssignments.length;
-    const completedCount = allAssignments.filter((a) => a.progress >= 100).length;
+    const completedCount = allAssignments.filter((a) => (a.percentage ?? 0) >= 100).length;
 
     const averageProgress =
       Math.round(
-        allAssignments.reduce((sum, a) => sum + a.progress, 0) /
+        allAssignments.reduce((sum, a) => sum + (a.percentage ?? 0), 0) /
           totalChildren
       ) || 0;
 
