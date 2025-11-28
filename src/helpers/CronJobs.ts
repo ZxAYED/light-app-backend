@@ -20,7 +20,7 @@ cron.schedule("0 0 * * *", async () => {
         isDeleted: false,
       },
     },
-    data: { progress: 0 },
+    data: { percentage: 0 },
   });
 
 
@@ -48,7 +48,7 @@ cron.schedule("0 1 * * *", async () => {
     if (daysBetween(now, goal.createdAt) % 7 === 0) {
       await prisma.goalAssignment.updateMany({
         where: { goalId: goal.id },
-        data: { progress: 0 },
+        data: { percentage: 0 },
       });
 
       await prisma.goal.update({
@@ -85,7 +85,7 @@ cron.schedule("0 2 * * *", async () => {
     if (daysBetween(now, goal.createdAt) % 30 === 0) {
       await prisma.goalAssignment.updateMany({
         where: { goalId: goal.id },
-        data: { progress: 0 },
+        data: { percentage: 0 },
       });
 
       await prisma.goal.update({
