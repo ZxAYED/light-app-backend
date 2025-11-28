@@ -45,6 +45,7 @@ CREATE TABLE "User" (
     "role" "UserRole" NOT NULL DEFAULT 'PARENT',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "otp" TEXT,
+    "isDeleted" BOOLEAN DEFAULT false,
     "otp_expires_at" TIMESTAMP(3),
     "is_verified" BOOLEAN NOT NULL DEFAULT false,
     "password_reset_otp" TEXT,
@@ -64,6 +65,7 @@ CREATE TABLE "ParentProfile" (
     "relation" "Relation",
     "dateOfBirth" TIMESTAMP(3),
     "location" TEXT,
+    "isDeleted" BOOLEAN DEFAULT false,
     "giftedCoins" INTEGER DEFAULT 0,
     "pushNotification" BOOLEAN DEFAULT true,
     "dailyReminders" BOOLEAN DEFAULT true,
@@ -94,6 +96,7 @@ CREATE TABLE "ChildProfile" (
     "deleteGoals" BOOLEAN NOT NULL DEFAULT false,
     "deleteAccount" BOOLEAN NOT NULL DEFAULT false,
     "avatarId" TEXT,
+    "isDeleted" BOOLEAN DEFAULT false,
 
     CONSTRAINT "ChildProfile_pkey" PRIMARY KEY ("id")
 );
@@ -111,8 +114,12 @@ CREATE TABLE "Goal" (
     "startDate" TIMESTAMP(3),
     "endDate" TIMESTAMP(3),
     "durationMin" INTEGER,
-    "progress" INTEGER NOT NULL DEFAULT 0,
+    "progress" INTEGER DEFAULT 0,
+    "progressAvg" INTEGER DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "isDeleted" BOOLEAN NOT NULL DEFAULT false,
+    "isRecurring" BOOLEAN DEFAULT false,
+    "nextResetAt" TIMESTAMP(3),
 
     CONSTRAINT "Goal_pkey" PRIMARY KEY ("id")
 );
@@ -122,8 +129,26 @@ CREATE TABLE "GoalAssignment" (
     "id" TEXT NOT NULL,
     "goalId" TEXT NOT NULL,
     "childId" TEXT NOT NULL,
+    "minutesCompleted" INTEGER DEFAULT 0,
+    "progressAvg" INTEGER DEFAULT 0,
+    "percentage" INTEGER DEFAULT 0,
+    "lastResetAt" TIMESTAMP(3),
+    "lastUpdatedAt" TIMESTAMPTZ(6) DEFAULT CURRENT_TIMESTAMP,
+    "isDeleted" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "GoalAssignment_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "GoalProgressLog" (
+    "id" TEXT NOT NULL,
+    "goalId" TEXT NOT NULL,
+    "childId" TEXT NOT NULL,
+    "minutes" INTEGER NOT NULL,
+    "percent" INTEGER NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "GoalProgressLog_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -255,6 +280,9 @@ CREATE UNIQUE INDEX "ChildProfile_userId_key" ON "ChildProfile"("userId");
 CREATE INDEX "ChildProfile_parentId_idx" ON "ChildProfile"("parentId");
 
 -- CreateIndex
+CREATE INDEX "ChildProfile_userId_idx" ON "ChildProfile"("userId");
+
+-- CreateIndex
 CREATE INDEX "ChildProfile_name_idx" ON "ChildProfile"("name");
 
 -- CreateIndex
@@ -282,6 +310,12 @@ CREATE INDEX "GoalAssignment_childId_idx" ON "GoalAssignment"("childId");
 CREATE UNIQUE INDEX "GoalAssignment_goalId_childId_key" ON "GoalAssignment"("goalId", "childId");
 
 -- CreateIndex
+CREATE INDEX "GoalProgressLog_goalId_idx" ON "GoalProgressLog"("goalId");
+
+-- CreateIndex
+CREATE INDEX "GoalProgressLog_childId_idx" ON "GoalProgressLog"("childId");
+
+-- CreateIndex
 CREATE INDEX "HelpRequestMessage_helpRequestId_idx" ON "HelpRequestMessage"("helpRequestId");
 
 -- CreateIndex
@@ -303,25 +337,31 @@ CREATE INDEX "PushToken_childId_idx" ON "PushToken"("childId");
 ALTER TABLE "ParentProfile" ADD CONSTRAINT "ParentProfile_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "ChildProfile" ADD CONSTRAINT "ChildProfile_avatarId_fkey" FOREIGN KEY ("avatarId") REFERENCES "Avatar"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "ChildProfile" ADD CONSTRAINT "ChildProfile_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "ParentProfile"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ChildProfile" ADD CONSTRAINT "ChildProfile_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ChildProfile" ADD CONSTRAINT "ChildProfile_avatarId_fkey" FOREIGN KEY ("avatarId") REFERENCES "Avatar"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "Goal" ADD CONSTRAINT "Goal_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "GoalAssignment" ADD CONSTRAINT "GoalAssignment_goalId_fkey" FOREIGN KEY ("goalId") REFERENCES "Goal"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "GoalAssignment" ADD CONSTRAINT "GoalAssignment_childId_fkey" FOREIGN KEY ("childId") REFERENCES "ChildProfile"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Notification" ADD CONSTRAINT "Notification_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "GoalAssignment" ADD CONSTRAINT "GoalAssignment_goalId_fkey" FOREIGN KEY ("goalId") REFERENCES "Goal"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "GoalProgressLog" ADD CONSTRAINT "GoalProgressLog_goalId_fkey" FOREIGN KEY ("goalId") REFERENCES "Goal"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "GoalProgressLog" ADD CONSTRAINT "GoalProgressLog_childId_fkey" FOREIGN KEY ("childId") REFERENCES "ChildProfile"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Notification" ADD CONSTRAINT "Notification_assetId_fkey" FOREIGN KEY ("assetId") REFERENCES "Asset"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Notification" ADD CONSTRAINT "Notification_childId_fkey" FOREIGN KEY ("childId") REFERENCES "ChildProfile"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -333,16 +373,16 @@ ALTER TABLE "Notification" ADD CONSTRAINT "Notification_goalId_fkey" FOREIGN KEY
 ALTER TABLE "Notification" ADD CONSTRAINT "Notification_helpRequestId_fkey" FOREIGN KEY ("helpRequestId") REFERENCES "HelpRequest"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Notification" ADD CONSTRAINT "Notification_assetId_fkey" FOREIGN KEY ("assetId") REFERENCES "Asset"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Notification" ADD CONSTRAINT "Notification_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "HelpRequest" ADD CONSTRAINT "HelpRequest_childId_fkey" FOREIGN KEY ("childId") REFERENCES "ChildProfile"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "HelpRequest" ADD CONSTRAINT "HelpRequest_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "HelpRequest" ADD CONSTRAINT "HelpRequest_goalId_fkey" FOREIGN KEY ("goalId") REFERENCES "Goal"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "HelpRequest" ADD CONSTRAINT "HelpRequest_goalId_fkey" FOREIGN KEY ("goalId") REFERENCES "Goal"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "HelpRequest" ADD CONSTRAINT "HelpRequest_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "HelpRequestMessage" ADD CONSTRAINT "HelpRequestMessage_helpRequestId_fkey" FOREIGN KEY ("helpRequestId") REFERENCES "HelpRequest"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -351,22 +391,22 @@ ALTER TABLE "HelpRequestMessage" ADD CONSTRAINT "HelpRequestMessage_helpRequestI
 ALTER TABLE "HelpRequestMessage" ADD CONSTRAINT "HelpRequestMessage_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ChildAsset" ADD CONSTRAINT "ChildAsset_childId_fkey" FOREIGN KEY ("childId") REFERENCES "ChildProfile"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ChildAsset" ADD CONSTRAINT "ChildAsset_assetId_fkey" FOREIGN KEY ("assetId") REFERENCES "Asset"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ChildAsset" ADD CONSTRAINT "ChildAsset_assetId_fkey" FOREIGN KEY ("assetId") REFERENCES "Asset"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ChildAsset" ADD CONSTRAINT "ChildAsset_childId_fkey" FOREIGN KEY ("childId") REFERENCES "ChildProfile"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Asset" ADD CONSTRAINT "Asset_avatarId_fkey" FOREIGN KEY ("avatarId") REFERENCES "Avatar"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PushToken" ADD CONSTRAINT "PushToken_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "PushToken" ADD CONSTRAINT "PushToken_childId_fkey" FOREIGN KEY ("childId") REFERENCES "ChildProfile"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "PushToken" ADD CONSTRAINT "PushToken_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_childId_fkey" FOREIGN KEY ("childId") REFERENCES "ChildProfile"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
