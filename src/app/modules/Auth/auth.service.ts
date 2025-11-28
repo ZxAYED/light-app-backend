@@ -7,10 +7,10 @@ import prisma from "../../../shared/prisma";
 import AppError from "../../Errors/AppError";
 
 
-import { UserRole } from "@prisma/client";
+import { User, UserRole } from "@prisma/client";
 import { sendOtpEmail } from "../../../utils/sendOtpEmail";
 import { sendPasswordResetOtp } from "../../../utils/sendResetPasswordOtp";
-import { CreateChildInput, CreateUserInput } from "./auth.validation";
+import { CreateChildInput, CreateUserInput } from './auth.validation';
 
 const createUser = async (payload: CreateUserInput) => {
 
@@ -36,7 +36,7 @@ const createUser = async (payload: CreateUserInput) => {
       data: {
         email: payload.email,
         password: hashedPassword,
-        role: UserRole.PARENT,
+        role: "PARENT",
         otp,
         otp_expires_at: otpExpiresAt,
         is_verified: false,
@@ -50,13 +50,13 @@ const createUser = async (payload: CreateUserInput) => {
 
 
     const result = await tx.parentProfile.create({
-  data: {
-    userId: res.id,
-    name: payload.name,
-    phone: payload.phone
-  }
-});
-  await  sendOtpEmail(payload.email, otp);
+      data: {
+        userId: res.id,
+        name: payload.name,
+        phone: payload.phone
+      }
+    });
+    await sendOtpEmail(payload.email, otp);
 
 
     return { ...res, ...result };
@@ -150,6 +150,10 @@ const loginUser = async (payload: { email: string; password: string }) => {
     throw new AppError(status.NOT_FOUND, "User not found");
   }
 
+  if (user.isDeleted) {
+    throw new AppError(status.NOT_FOUND, "User not found");
+  }
+
   // Step 2: Check if user is verified
   if (!user.is_verified) {
     throw new AppError(
@@ -171,31 +175,20 @@ const loginUser = async (payload: { email: string; password: string }) => {
   if (user.role === UserRole.PARENT) {
     profile = await prisma.parentProfile.findFirst({
       where: { userId: user.id },
-      select: {
-        id: true,
-        name: true,
-        phone: true,
-        relation: true,
-        image: true,
-        dateOfBirth: true,
-        location: true,
+      include: {
+        children: {
+          where: {
+            isDeleted: false,
+          }
+        }
       }
+     
     })
   }
   else if (user.role === UserRole.CHILD) {
     profile = await prisma.childProfile.findFirst({
       where: { userId: user.id },
-      select: {
-        id: true,
-        name: true,
-        phone: true,
-        relation: true,
-        coins: true,
-        image: true,
-        location: true,
-        dateOfBirth: true,
-        gender: true,
-      }
+     
     });
   }
   else {
@@ -215,7 +208,12 @@ const loginUser = async (payload: { email: string; password: string }) => {
   );
 
   const refreshToken = jwtHelpers.generateToken(
-    { email: user.email },
+  {
+      id: user.id,
+      email: user.email,
+      profile,
+      role: user.role,
+    },
     config.jwt.refresh_token_secret as Secret,
     config.jwt.refresh_token_expires_in as string
   );
@@ -250,54 +248,54 @@ const refreshAccessToken = async (token: string) => {
     if (!user) {
       throw new AppError(status.NOT_FOUND, "User not found");
     }
-  let profile
-  if (user.role === UserRole.PARENT) {
-    profile = await prisma.parentProfile.findFirst({
-      where: { userId: user.id },
-      select: {
-        id: true,
-        name: true,
-        phone: true,
-        relation: true,
-        image: true,
-        dateOfBirth: true,
-        location: true,
-      }
-    })
-  }
-  else if (user.role === UserRole.CHILD) {
-    profile = await prisma.childProfile.findFirst({
-      where: { userId: user.id },
-      select: {
-        id: true,
-        name: true,
-        phone: true,
-        relation: true,
-        coins: true,
-        image: true,
-        location: true,
-        dateOfBirth: true,
-        gender: true,
-      }
-    });
-  }
-  else {
-    profile = user
-  }
+    let profile
+    if (user.role === UserRole.PARENT) {
+      profile = await prisma.parentProfile.findFirst({
+        where: { userId: user.id },
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          relation: true,
+          image: true,
+          dateOfBirth: true,
+          location: true,
+        }
+      })
+    }
+    else if (user.role === UserRole.CHILD) {
+      profile = await prisma.childProfile.findFirst({
+        where: { userId: user.id },
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          relation: true,
+          coins: true,
+          image: true,
+          location: true,
+          dateOfBirth: true,
+          gender: true,
+        }
+      });
+    }
+    else {
+      profile = user
+    }
 
-  // Step 4: Generate access & refresh tokens
-  const accessToken = jwtHelpers.generateToken(
-    {
-      id: user.id,
-      email: user.email,
-      profile,
-      role: user.role,
-    },
-    config.jwt.access_token_secret as Secret,
-    config.jwt.access_token_expires_in as string
-  );
+    // Step 4: Generate access & refresh tokens
+    const accessToken = jwtHelpers.generateToken(
+      {
+        id: user.id,
+        email: user.email,
+        profile,
+        role: user.role,
+      },
+      config.jwt.access_token_secret as Secret,
+      config.jwt.access_token_expires_in as string
+    );
 
- 
+
 
     return {
       accessToken,
@@ -370,7 +368,7 @@ const requestPasswordReset = async (email: string) => {
 
 interface ResetPasswordPayload {
   email: string;
-  otp: string;       
+  otp: string;
   newPassword: string;
 }
 
@@ -402,7 +400,7 @@ const resetPassword = async (payload: ResetPasswordPayload & { opt?: string }) =
 
   return { message: "Password has been reset successfully" };
 };
-const createChild = async (payload: CreateChildInput & {image?:string , imagePath?:string, userId:string}) => {
+const createChild = async (payload: CreateChildInput & { image?: string, imagePath?: string, userId: string }) => {
   // Step 1: Check if user already exists
   const isUserExist = await prisma.user.findFirst({
     where: { email: payload.email },
@@ -422,12 +420,12 @@ const createChild = async (payload: CreateChildInput & {image?:string , imagePat
     role: UserRole.CHILD,
     is_verified: true, // children do not need OTP
   };
-const parent = await prisma.parentProfile.findFirst({
-  where: { userId: payload.userId },
-});
-if (!parent) {
-  throw new AppError(status.NOT_FOUND, "Parent not found");
-}
+  const parent = await prisma.parentProfile.findFirst({
+    where: { userId: payload.userId },
+  });
+  if (!parent) {
+    throw new AppError(status.NOT_FOUND, "Parent not found");
+  }
 
 
   const result = await prisma.$transaction(async (tx) => {
@@ -445,16 +443,16 @@ if (!parent) {
     const child = await tx.childProfile.create({
       data: {
         userId: user.id,
-        parentId: parent.id, 
-        accountType: payload.accountType ,
+        parentId: parent.id,
+        accountType: payload.accountType,
         name: payload.name,
         gender: payload.gender,
         phone: payload.phone,
         email: payload.email,
         dateOfBirth: payload.dateOfBirth,
         location: payload.location,
-       image: payload.image,
-       imagePath: payload.imagePath,
+        image: payload.image,
+        imagePath: payload.imagePath,
 
         relation: payload.relation,
 
@@ -462,9 +460,9 @@ if (!parent) {
         editProfile: payload.editProfile ?? true,
         createGoals: payload.createGoals ?? false,
         approveTasks: payload.approveTasks ?? false,
-        deleteGoals: payload.deleteGoals ?? false,  
+        deleteGoals: payload.deleteGoals ?? false,
       },
-    
+
     });
 
     return { ...user, ...child };
@@ -473,46 +471,179 @@ if (!parent) {
 
   return result;
 };
-const updateChild = async (payload: Partial<CreateChildInput> & {image?:string , imagePath?:string, childId?:string}) => {
-const {childId, ...others} = payload
-const data = {
-      name: others.name,
-      gender: others.gender,
-      phone: others.phone,
-      dateOfBirth: others.dateOfBirth,
-      location: others.location,
-     image: others.image,
-     imagePath: others.imagePath,
-    }
+const updateChild = async (payload: Partial<CreateChildInput> & { image?: string, imagePath?: string, childId?: string }) => {
+  const { childId, ...others } = payload
+  console.log("🚀 ~ updateChild ~ others:", others)
+  // const data = {
+  //   name: others.name,
+  //   gender: others.gender,
+  //   phone: others.phone,
+  //   dateOfBirth: others.dateOfBirth,
+  //   location: others.location,
+  //   image: others.image,
+  //   imagePath: others.imagePath,
+  //   relation: others.relation,
+  //   accountType: others.accountType
+  // }
   const result = await prisma.childProfile.update({
-    where: { id:childId},
-    data: data,
-    
+    where: { id: childId },
+    data: others,
+
   });
   return result;
 };
-const getAllChild =async (id:string)=>{
-
-  const user = await prisma.user.findUnique({
-    where: { id },
-  });
-  if(!user){
-    throw new AppError(status.NOT_FOUND, "User not found");
-  }
-  const result = await prisma.parentProfile.findUnique({
-    where: { userId:user.id },
-    select:{
-      children:true
-    }
+const updateParent = async (payload: Partial<any> & { image?: string, imagePath?: string, parentId?: string }) => {
+  const { parentId, ...others } = payload
+  const result = await prisma.parentProfile.update({
+    where: { id: parentId },
+    data: others,
 
   });
   return result;
+};
+const deleteChild = async (childId: string) => {
+
+   return  prisma.$transaction(async (tx) => {
+   const result = await prisma.childProfile.update({
+    where: { id: childId },
+    data: {
+      isDeleted: true,
+    }
+  });
+    await tx.user.update({
+      where: { id: result.userId },
+      data: {
+        isDeleted: true,
+      }
+    });
+})
+ 
+};
+const deleteParent = async (parentId: string) => {
+  const parent = await prisma.parentProfile.findFirst({
+    where: { id: parentId },
+  });
+  if (!parent) {
+    throw new AppError(status.NOT_FOUND, "Parent not found");
+  }
+  return  prisma.$transaction(async (tx) => {
+    await tx.parentProfile.update({
+      where: { id: parentId },
+      data: {
+        isDeleted: true,
+      }
+    });
+    await tx.user.update({
+      where: { id: parent.userId },
+      data: {
+        isDeleted: true,
+      }
+    });
+  });
+};
+const getAllChild = async (userId: string) => {
+
+  const parent = await prisma.parentProfile.findUnique({
+    where: { userId },
+    select: { id: true }
+  });
+
+  if (!parent) {
+    throw new AppError(status.NOT_FOUND, "Parent not found");
+  }
+
+
+  const children = await prisma.childProfile.findMany({
+    where: {
+      parentId: parent.id,
+      isDeleted: false
+    }
+  });
+
+  return  children ;
+};
+const getProfile = async (user: User) => {
+  let result
+if(user.role === UserRole.PARENT){
+ result = await prisma.user.findUnique({
+    where: { id: user.id },
+    include: {
+      parentProfile: {
+        include:{
+          children: true
+        }
+      },
+    
+    }
+  }) 
 }
+if(user.role === UserRole.CHILD){
+ result = await prisma.user.findUnique({
+    where: { id: user.id },
+  
+    include: {
+    
+      childProfile: {
+        include: {
+          parent:true
+        }
+      },
+    }
+  }) 
+}
+if(user.role === UserRole.ADMIN){
+ result = await prisma.user.findUnique({
+    where: { id: user.id },
+   
+  }) 
+}
+  
+  
+
+ 
+  return  result ;
+};
+
+
+const getAllSiblings = async (childUserId: string) => {
+
+  const child = await prisma.childProfile.findUnique({
+    where: { userId: childUserId },
+    select: { parentId: true }
+  });
+
+  if (!child) {
+    throw new AppError(404, "Child not found");
+  }
+
+
+  const siblings = await prisma.childProfile.findMany({
+    where: {
+      parentId: child.parentId,
+      isDeleted: false,
+    },
+    select: {
+      id: true,
+      userId: true,
+      name: true,
+      image: true,
+      gender: true,
+      phone: true,
+      dateOfBirth: true
+    }
+  });
+
+  return siblings;
+};
+
+
+
 
 export const UserService = {
-  createUser,
-  loginUser,
-  resendOtp,
+  createUser,getAllSiblings,
+  loginUser,getProfile,
+  resendOtp,getAllChild,
+  deleteParent,
   refreshAccessToken,
   verifyOtp,
   changePassword,
@@ -520,5 +651,6 @@ export const UserService = {
   resetPassword,
   createChild,
   updateChild,
-  getAllChild
+  updateParent,
+  deleteChild
 };

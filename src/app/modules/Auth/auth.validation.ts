@@ -92,5 +92,18 @@ export const updateChildSchema = z.object({
   phone: z.string().optional(),
   dateOfBirth: z.string().optional(),
   location: z.string().optional(),
+  relation: z.string().optional(),
+  accountType: ChildAccountTypeEnum.optional(),
+  
 });
 export type CreateChildInput = z.infer<typeof createChildSchema>;
+export type UpdateParentInput = z.infer<typeof updateParentSchema>;
+export const updateParentSchema = z.object({
+  name: z.string().min(1, { message: "Parent name is required" }).optional(),
+  phone: z.string().optional(),
+  dateOfBirth: z.string().optional(),
+  location: z.string().optional(),
+  pushNotification: z.boolean().optional(),
+  dailyReminders: z.boolean().optional(),
+  childTaskUpdates: z.boolean().optional(),
+});

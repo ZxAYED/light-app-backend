@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
-import { jwtHelpers } from "../../helpers/jwtHelpers";
-import config from "../../config";
 import { Secret } from "jsonwebtoken";
+import config from "../../config";
+import { jwtHelpers } from "../../helpers/jwtHelpers";
 import prisma from "../../shared/prisma";
 
 const RoleValidation = (...roles: string[]) => {
@@ -37,15 +37,13 @@ const RoleValidation = (...roles: string[]) => {
         where: {
           email: verifiedUser.email,
         },
-        select: {
-          id: true,
-          email: true,
-        },
+        
       });
 
-      // console.log(user);
+     
 
       req.user = User;
+      
 
       next();
     } catch (error: any) {

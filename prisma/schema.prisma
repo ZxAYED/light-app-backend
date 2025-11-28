@@ -2,34 +2,276 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// prisma/schema.prisma
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id                     String    @id @default(uuid())
-  email                  String    @unique
+  id                     String               @id @default(uuid())
+  email                  String               @unique
   password               String
-  role                   UserRole  @default(PARENT)
-  createdAt              DateTime  @default(now())
+  role                   UserRole             @default(PARENT)
+  createdAt              DateTime             @default(now())
   otp                    String?
+  isDeleted              Boolean?             @default(false)
   otp_expires_at         DateTime?
-  is_verified            Boolean   @default(false)
+  is_verified            Boolean              @default(false)
   password_reset_otp     String?
   password_reset_expires DateTime?
-
-  goalsAuthored      Goal[]
-  parentProfile      ParentProfile?
-  childProfile       ChildProfile?
-  Notification       Notification[]
-  HelpRequest        HelpRequest[]
-  HelpRequestMessage HelpRequestMessage[]
-  PushToken          PushToken[]
-  auditLogs          AuditLog[]
+  auditLogs              AuditLog[]
+  childProfile           ChildProfile?
+  goalsAuthored          Goal[]
+  HelpRequest            HelpRequest[]
+  HelpRequestMessage     HelpRequestMessage[]
+  Notification           Notification[]
+  parentProfile          ParentProfile?
+  PushToken              PushToken[]
 
   @@index([role])
+}
+
+model ParentProfile {
+  id          String    @id @default(uuid())
+  userId      String    @unique
+  name        String
+  phone       String
+  image       String?
+  imagePath   String?
+  relation    Relation?
+  dateOfBirth DateTime?
+  location    String?
+  isDeleted   Boolean?  @default(false)
+
+  giftedCoins      Int?           @default(0)
+  pushNotification Boolean?       @default(true)
+  dailyReminders   Boolean?       @default(true)
+  childTaskUpdates Boolean?       @default(true)
+  children         ChildProfile[]
+  user             User           @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([name])
+}
+
+model ChildProfile {
+  id               String            @id @default(uuid())
+  userId           String            @unique
+  parentId         String
+  accountType      ChildAccountType  @default(MODERATOR)
+  name             String
+  gender           Gender?
+  phone            String?
+  email            String?
+  dateOfBirth      DateTime?
+  location         String?
+  image            String?
+  imagePath        String?
+  coins            Int               @default(0)
+  relation         String?
+  editProfile      Boolean           @default(true)
+  createGoals      Boolean           @default(true)
+  approveTasks     Boolean           @default(true)
+  deleteGoals      Boolean           @default(false)
+  deleteAccount    Boolean           @default(false)
+  avatarId         String?
+  isDeleted        Boolean?          @default(false)
+  auditLogs        AuditLog[]
+  ChildAsset       ChildAsset[]
+  avatar           Avatar?           @relation(fields: [avatarId], references: [id])
+  parent           ParentProfile     @relation(fields: [parentId], references: [id])
+  user             User              @relation(fields: [userId], references: [id])
+  goals            GoalAssignment[]
+  HelpRequest      HelpRequest[]
+  Notification     Notification[]
+  PushToken        PushToken[]
+  goalProgressLogs GoalProgressLog[]
+
+  @@index([parentId])
+  @@index([userId])
+  @@index([name])
+}
+
+model Goal {
+  id          String     @id @default(uuid())
+  authorId    String
+  authorRole  AuthorRole @default(PARENT)
+  title       String
+  description String?
+  type        GoalType   @default(ONE_TIME)
+  status      GoalStatus @default(ACTIVE)
+  rewardCoins Int        @default(0)
+  startDate   DateTime?
+  endDate     DateTime?
+  durationMin Int?
+  progress    Int?       @default(0)
+  progressAvg Int?       @default(0)
+  createdAt   DateTime   @default(now())
+  isDeleted   Boolean    @default(false)
+  isRecurring Boolean?   @default(false)
+  nextResetAt DateTime?
+
+  author           User              @relation(fields: [authorId], references: [id])
+  assignedChildren GoalAssignment[]
+  HelpRequest      HelpRequest[]
+  Notification     Notification[]
+  goalProgressLogs GoalProgressLog[]
+
+  @@index([authorId])
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+  @@index([title])
+}
+
+model GoalAssignment {
+  id      String @id @default(uuid())
+  goalId  String
+  childId String
+
+  minutesCompleted Int @default(0) // raw minutes
+  progress         Int @default(0) // percentage
+
+  percentage    Int       @default(0) // % progress (0–100)
+  lastResetAt   DateTime? // when this child last reset
+  lastUpdatedAt DateTime  @updatedAt
+
+  isDeleted Boolean      @default(false)
+  child     ChildProfile @relation(fields: [childId], references: [id])
+  goal      Goal         @relation(fields: [goalId], references: [id])
+
+  @@unique([goalId, childId])
+  @@index([goalId])
+  @@index([childId])
+}
+
+model GoalProgressLog {
+  id        String   @id @default(uuid())
+  goalId    String
+  childId   String
+  minutes   Int
+  percent   Int
+  createdAt DateTime @default(now())
+
+  goal  Goal         @relation(fields: [goalId], references: [id])
+  child ChildProfile @relation(fields: [childId], references: [id])
+
+  @@index([goalId])
+  @@index([childId])
+}
+
+model Notification {
+  id            String           @id @default(uuid())
+  parentId      String?
+  childId       String?
+  goalId        String?
+  helpRequestId String?
+  assetId       String?
+  type          NotificationType
+  title         String
+  message       String
+  isRead        Boolean          @default(false)
+  createdAt     DateTime         @default(now())
+  asset         Asset?           @relation(fields: [assetId], references: [id])
+  child         ChildProfile?    @relation(fields: [childId], references: [id])
+  goal          Goal?            @relation(fields: [goalId], references: [id])
+  helpRequest   HelpRequest?     @relation(fields: [helpRequestId], references: [id])
+  parent        User?            @relation(fields: [parentId], references: [id])
+}
+
+model HelpRequest {
+  id            String               @id @default(uuid())
+  childId       String
+  parentId      String
+  goalId        String
+  message       String?
+  status        HelpStatus           @default(PENDING)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  child         ChildProfile         @relation(fields: [childId], references: [id])
+  goal          Goal                 @relation(fields: [goalId], references: [id])
+  parent        User                 @relation(fields: [parentId], references: [id])
+  replies       HelpRequestMessage[]
+  notifications Notification[]
+}
+
+model HelpRequestMessage {
+  id            String      @id @default(uuid())
+  helpRequestId String
+  senderId      String
+  senderRole    UserRole
+  message       String
+  createdAt     DateTime    @default(now())
+  helpRequest   HelpRequest @relation(fields: [helpRequestId], references: [id])
+  sender        User        @relation(fields: [senderId], references: [id])
+
+  @@index([helpRequestId])
+  @@index([senderId])
+}
+
+model ChildAsset {
+  id        String       @id @default(uuid())
+  childId   String
+  assetId   String
+  createdAt DateTime     @default(now())
+  asset     Asset        @relation(fields: [assetId], references: [id])
+  child     ChildProfile @relation(fields: [childId], references: [id])
+
+  @@unique([childId, assetId])
+}
+
+model Asset {
+  id           String         @id @default(uuid())
+  name         String
+  category     AssetCategory
+  style        String?
+  colorName    String?
+  image        String
+  imagePath    String?
+  price        Int
+  origin       String?
+  gender       AssetGender?
+  avatarId     String?
+  createdAt    DateTime       @default(now())
+  avatar       Avatar?        @relation(fields: [avatarId], references: [id])
+  unlockedBy   ChildAsset[]
+  Notification Notification[]
+}
+
+model Avatar {
+  id        String         @id @default(uuid())
+  name      String
+  image     String
+  origin    String?
+  gender    AvatarGender
+  createdAt DateTime       @default(now())
+  assets    Asset[]
+  usedBy    ChildProfile[]
+}
+
+model PushToken {
+  id        String        @id @default(uuid())
+  userId    String?
+  childId   String?
+  token     String        @unique
+  platform  Platform
+  createdAt DateTime      @default(now())
+  child     ChildProfile? @relation(fields: [childId], references: [id])
+  user      User?         @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([childId])
+}
+
+model AuditLog {
+  id        String        @id @default(uuid())
+  userId    String?
+  childId   String?
+  action    String
+  metadata  Json?
+  createdAt DateTime      @default(now())
+  child     ChildProfile? @relation(fields: [childId], references: [id])
+  user      User?         @relation(fields: [userId], references: [id])
 }
 
 enum UserRole {
@@ -45,70 +287,6 @@ enum Relation {
   SISTER
 }
 
-model ParentProfile {
-  id     String @id @default(uuid())
-  userId String @unique
-
-  name        String
-  phone       String
-  image       String?
-  imagePath   String?
-  relation    Relation?
-  dateOfBirth DateTime?
-  location    String?
-  giftedCoins Int?      @default(0)
-
-  pushNotification Boolean? @default(true)
-  dailyReminders   Boolean? @default(true)
-  childTaskUpdates Boolean? @default(true)
-
-  user     User           @relation(fields: [userId], references: [id])
-  children ChildProfile[]
-
-  @@index([userId])
-  @@index([name]) // Parent searching by name
-}
-
-model ChildProfile {
-  id       String @id @default(uuid())
-  userId   String @unique
-  parentId String
-
-  accountType ChildAccountType @default(MODERATOR)
-  name        String
-  gender      Gender?
-  phone       String?
-  email       String?
-  dateOfBirth DateTime?
-  location    String?
-  image       String?
-  imagePath   String?
-
-  coins    Int     @default(0)
-  relation String?
-
-  editProfile   Boolean @default(true)
-  createGoals   Boolean @default(false)
-  approveTasks  Boolean @default(false)
-  deleteGoals   Boolean @default(false)
-  deleteAccount Boolean @default(false)
-
-  goals        GoalAssignment[]
-  parent       ParentProfile    @relation(fields: [parentId], references: [id])
-  user         User             @relation(fields: [userId], references: [id])
-  avatarId     String?
-  avatar       Avatar?          @relation(fields: [avatarId], references: [id])
-  Notification Notification[]
-  HelpRequest  HelpRequest[]
-  ChildAsset   ChildAsset[]
-  PushToken    PushToken[]
-  auditLogs    AuditLog[]
-
-  @@index([parentId]) 
-  @@index([userId]) 
-  @@index([name]) // Useful for searching child by name
-}
-
 enum Gender {
   MALE
   FEMALE
@@ -118,53 +296,6 @@ enum ChildAccountType {
   ADMIN
   MODERATOR
   VIEWER
-}
-
-model Goal {
-  id         String     @id @default(uuid())
-  authorId   String
-  authorRole AuthorRole @default(PARENT)
-
-  title       String
-  description String?
-  type        GoalType   @default(ONE_TIME)
-  status      GoalStatus @default(ACTIVE)
-  rewardCoins Int        @default(0)
-  startDate   DateTime?
-  endDate     DateTime?
-  durationMin Int?
-  progress    Int        @default(0)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime?   @updatedAt
-
-isDeleted  Boolean?    @default(false)
-
-  // Relations
-
-  author           User             @relation(fields: [authorId], references: [id])
-  assignedChildren GoalAssignment[]
-  Notification     Notification[]
-  HelpRequest      HelpRequest[]
-
-  // 🔥 Indexes for fast filtering & searching
-  @@index([authorId])
-  @@index([status])
-  @@index([type])
-  @@index([createdAt])
-  @@index([title])
-}
-
-model GoalAssignment {
-  id      String @id @default(uuid())
-  goalId  String
-  childId String
-
-  goal  Goal         @relation(fields: [goalId], references: [id])
-  child ChildProfile @relation(fields: [childId], references: [id])
-
-  @@unique([goalId, childId])
-  @@index([goalId])
-  @@index([childId])
 }
 
 enum AuthorRole {
@@ -186,76 +317,16 @@ enum GoalType {
   MONTHLY
 }
 
-model Notification {
-  id            String  @id @default(uuid())
-  parentId      String?
-  childId       String?
-  goalId        String?
-  helpRequestId String?
-  assetId       String?
-
-  type      NotificationType
-  title     String
-  message   String
-  isRead    Boolean          @default(false)
-  createdAt DateTime         @default(now())
-
-  parent      User?         @relation(fields: [parentId], references: [id])
-  child       ChildProfile? @relation(fields: [childId], references: [id])
-  goal        Goal?         @relation(fields: [goalId], references: [id])
-  helpRequest HelpRequest?  @relation(fields: [helpRequestId], references: [id])
-  asset       Asset?        @relation(fields: [assetId], references: [id])
-}
-
 enum NotificationType {
   GOAL_CREATED
   GOAL_UPDATED
   GOAL_COMPLETED
-
   HELP_REQUEST
   HELP_REQUEST_ACCEPTED
   HELP_REQUEST_REJECTED
-
   REWARD_UNLOCKED
-
   DAILY_REMINDER
   CHILD_PROGRESS_UPDATE
-}
-
-model HelpRequest {
-  id       String @id @default(uuid())
-  childId  String
-  parentId String
-  goalId   String
-
-  message String? // initial message from child
-  status  HelpStatus @default(PENDING)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  child  ChildProfile @relation(fields: [childId], references: [id])
-  parent User         @relation(fields: [parentId], references: [id])
-  goal   Goal         @relation(fields: [goalId], references: [id])
-
-  replies       HelpRequestMessage[]
-  notifications Notification[]
-}
-
-model HelpRequestMessage {
-  id            String   @id @default(uuid())
-  helpRequestId String
-  senderId      String
-  senderRole    UserRole
-  message       String
-  createdAt     DateTime @default(now())
-
-  helpRequest HelpRequest @relation(fields: [helpRequestId], references: [id])
-  sender      User        @relation(fields: [senderId], references: [id])
-
-  @@index([helpRequestId])
-  @@index([senderId])
 }
 
 enum HelpStatus {
@@ -284,88 +355,12 @@ enum AssetGender {
   UNISEX
 }
 
-model ChildAsset {
-  id        String   @id @default(uuid())
-  childId   String
-  assetId   String
-  createdAt DateTime @default(now())
-
-  child ChildProfile @relation(fields: [childId], references: [id])
-  asset Asset        @relation(fields: [assetId], references: [id])
-
-  @@unique([childId, assetId])
-}
-
 enum AvatarGender {
   MALE
   FEMALE
 }
 
-model Asset {
-  id        String        @id @default(uuid())
-  name      String
-  category  AssetCategory
-  style     String?
-  colorName String?
-  image     String
-  imagePath String?
-  price     Int
-
-  origin String?
-  gender AssetGender?
-
-  avatarId String?
-  avatar   Avatar? @relation(fields: [avatarId], references: [id])
-
-  createdAt DateTime @default(now())
-
-  unlockedBy   ChildAsset[]
-  Notification Notification[]
-}
-
-model Avatar {
-  id    String @id @default(uuid())
-  name  String
-  image String // base avatar image (skeleton/face)
-
-  origin String? // e.g., Asia, Europe, Bangladesh, USA
-  gender AvatarGender
-
-  createdAt DateTime @default(now())
-
-  assets Asset[] // all assets belonging to this avatar
-  usedBy ChildProfile[] // children using this avatar
-}
-
-model PushToken {
-  id      String  @id @default(uuid())
-  userId  String?
-  childId String?
-
-  token     String   @unique
-  platform  Platform // ANDROID, IOS
-  createdAt DateTime @default(now())
-
-  user  User?         @relation(fields: [userId], references: [id])
-  child ChildProfile? @relation(fields: [childId], references: [id])
-
-  @@index([userId])
-  @@index([childId])
-}
-
 enum Platform {
   ANDROID
   IOS
-}
-
-model AuditLog {
-  id        String   @id @default(uuid())
-  userId    String?
-  childId   String?
-  action    String
-  metadata  Json?
-  createdAt DateTime @default(now())
-
-  user  User?         @relation(fields: [userId], references: [id])
-  child ChildProfile? @relation(fields: [childId], references: [id])
 }

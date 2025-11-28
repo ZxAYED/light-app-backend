@@ -1,141 +1,308 @@
-import { AuthorRole, UserRole } from "@prisma/client";
-import status from "http-status";
+import { AuthorRole, GoalStatus, UserRole } from "@prisma/client";
 import prisma from "../../../shared/prisma";
 import AppError from "../../Errors/AppError";
 import { CreateGoalInput, UpdateGoalInput } from "./goal.validation";
 
 export const GoalService = {
-  createGoal: async (payload: CreateGoalInput & { authorId: string, authorRole: AuthorRole }) => {
-    const { assignedChildren, ...goalData } = payload;
 
-    return await prisma.$transaction(async (tx) => {
+ createGoal: async (
+  payload: CreateGoalInput & { authorId: string; authorRole: UserRole }
+) => {
+  const { assignedChildIds, ...goalData } = payload;
 
-      const goal = await tx.goal.create({
-        data: {
-          ...goalData,
-          authorId: payload.authorId,
-          authorRole: payload.authorRole,
-        },
-      });
-
-      // Assign children
-      await tx.goalAssignment.createMany({
-        data: assignedChildren.map((childId) => ({
-          childId,
-          goalId: goal.id,
-        })),
-      });
-
-      return goal;
+  // --- CHILD VALIDATION ---
+  if (payload.authorRole === UserRole.CHILD) {
+    const childProfile = await prisma.childProfile.findUnique({
+      where: { userId: payload.authorId },
     });
-  },
 
-  updateGoal: async (payload: UpdateGoalInput & { authorId: string, authorRole: AuthorRole, goalId: string }) => {
-    
+    if (!childProfile) throw new AppError(404, "Child profile not found");
 
-    const existingGoal = await prisma.goal.findUnique({
+    if (!childProfile.createGoals)
+      throw new AppError(403, "You are not allowed to create goals");
+
+    // Child can only assign **themselves**
+    if (assignedChildIds.some((id) => id !== payload.authorId)) {
+      throw new AppError(
+        403,
+        "Children cannot assign goals to other children"
+      );
+    }
+  }
+
+  // --- CREATE GOAL ---
+  return prisma.$transaction(async (tx) => {
+    const createdGoal = await tx.goal.create({
+      data: {
+        ...goalData,
+        authorId: payload.authorId,
+        authorRole: payload.authorRole as AuthorRole,
+        status: "ACTIVE",
+      },
+    });
+
+    // Assign children
+    await tx.goalAssignment.createMany({
+      data: assignedChildIds.map((childId) => ({
+        goalId: createdGoal.id,
+        childId,
+      })),
+    });
+
+    return createdGoal;
+  });
+},
+
+
+updateGoal: async (
+    payload: UpdateGoalInput & {
+      goalId: string;
+      authorId: string;
+      authorRole: AuthorRole;
+    }
+  ) => {
+  const existingGoal = await prisma.goal.findUnique({
+    where: { id: payload.goalId },
+    include: { assignedChildren: true },
+  });
+
+  if (!existingGoal) throw new AppError(404, "Goal not found");
+  if (existingGoal.isDeleted) throw new AppError(400, "Goal is deleted");
+
+  // --- CHILD VALIDATION ---
+  if (payload.authorRole === UserRole.CHILD) {
+    const childProfile = await prisma.childProfile.findUnique({
+      where: { userId: payload.authorId },
+    });
+
+    if (!childProfile) throw new AppError(404, "Child profile not found");
+
+    // must be assigned
+    const isAssigned = existingGoal.assignedChildren.some(
+      (g) => g.childId === payload.authorId
+    );
+    if (!isAssigned)
+      throw new AppError(403, "You are not assigned to this goal");
+
+    // must have edit permission
+    if (!childProfile.createGoals)
+      throw new AppError(403, "You cannot update goals");
+
+    // Child cannot update forbidden fields
+    const forbidden = [
+      "rewardCoins",
+      "durationMin",
+      "type","status",
+      "assignedChildIds",
+      "isDeleted",
+      "startDate",
+      "endDate",
+    ];
+
+    for (const key of forbidden) {
+      if ((payload as any)[key] !== undefined) {
+        throw new AppError(403, `Children cannot update ${key}`);
+      }
+    }
+  }
+
+ 
+  return prisma.$transaction(async (tx) => {
+    const updatedGoal = await tx.goal.update({
       where: { id: payload.goalId },
+      data: {
+        title: payload.title,
+        description: payload.description,
+        rewardCoins: payload.rewardCoins,
+        status: payload.status,
+        startDate: payload.startDate,
+        endDate: payload.endDate,
+        type: payload.type,
+        durationMin: payload.durationMin,
+        isDeleted: payload.isDeleted ?? undefined,
+      },
     });
 
-    if (!existingGoal) {
-      throw new AppError(status.NOT_FOUND, "Goal not found");
-    }
-
-
-    if (existingGoal.isDeleted) {
-      throw new AppError(status.BAD_REQUEST, "This goal is deleted");
-    }
-// if(existingGoal.status === GoalStatus.CANCELLED){
-//         throw new AppError(status.BAD_REQUEST, "This goal is cancelled");
-//       }
-
-// if(existingGoal.status === GoalStatus.COMPLETED){
-//         throw new AppError(status.BAD_REQUEST, "This goal is completed");
-//       }
-      
-    if (existingGoal.authorId === UserRole.CHILD) {
-      const isAssigned = await prisma.goalAssignment.findFirst({
-        where: {
-          goalId: payload.goalId,
-          childId: payload.authorId,
-        },
-      });
-      if (!isAssigned) {
-        throw new AppError(status.UNAUTHORIZED, "You are not authorized to update this goal");
-      }
-      const childProfile = await prisma.childProfile.findUnique({
-        where: {
-          userId: payload.authorId,
-        },
-      });
-      if (!childProfile) {
-        throw new AppError(status.NOT_FOUND, "Child profile not found");
+    // Parent-specific logic
+    if (payload.authorRole === UserRole.PARENT) {
+      // Handle deletion
+      if (payload.isDeleted === true) {
+        await tx.goalAssignment.updateMany({
+          where: { goalId: payload.goalId },
+          data: { isDeleted: true },
+        });
+        return updatedGoal;
       }
 
-
-    }
-const updatedData = {
-  progress: payload.progress,
-  status: payload.status,
-  endDate: payload.endDate,
-  startDate: payload.startDate,
-  durationMin: payload.durationMin,
-  rewardCoins: payload.rewardCoins,
-  isDeleted: payload.isDeleted,
-  type: payload.type,
-  title: payload.title,
-  description: payload.description,
-  assignedChildIds: payload.assignedChildIds, 
-}
-
-    return prisma.$transaction(async (tx) => {
-
-      const updated = await tx.goal.update({
-        where: { id: payload.goalId },
-        data: updatedData,
-      });
-
-      // Re-assign children if provided
-      if (payload.assignedChildIds?.length ) {
+      // Update assigned children
+      if (payload.assignedChildIds) {
         await tx.goalAssignment.deleteMany({
           where: { goalId: payload.goalId },
         });
 
         await tx.goalAssignment.createMany({
           data: payload.assignedChildIds.map((childId) => ({
-            childId,
             goalId: payload.goalId,
+            childId,
           })),
         });
       }
-
-      return updated;
-    });
-  },
-
-  getParentGoals: async (parentId: string) => {
-    if(!parentId){
-      throw new AppError(404, "Parent Not Found")
     }
-    return prisma.goal.findMany({
-      where: { authorId: parentId },
-      include: {
-        assignedChildren: {
-          include: { child: true },
-        },
+
+    return updatedGoal;
+  });
+},
+
+
+
+ getParentGoals: async (parentId: string) => {
+  const goals = await prisma.goal.findMany({
+    where: { authorId: parentId, isDeleted: false },
+    include: {
+      assignedChildren: {
+        where: { isDeleted: false },
+        include: { child: true },
       },
-    });
-  },
+    },
+  });
 
-  getChildGoals: async (childId: string) => {
-     if(!childId){
-      throw new AppError(404, "Child Not Found")
-    }
+  return goals.map((g) => ({
+    ...g,
+    averageProgress:
+      g.assignedChildren.reduce((sum, a) => sum + a.progress, 0) /
+      (g.assignedChildren.length || 1),
+    totalProgress: g.assignedChildren.reduce((sum, a) => sum + a.progress, 0),
+    completedCount: g.assignedChildren.filter((a) => a.progress >= 100).length,
+    totalChildren: g.assignedChildren.length,
+  }));
+},
+
+
+
+  getChildGoals: async (userId: string) => {
+    const childProfile = await prisma.childProfile.findUnique({
+      where: { userId },
+    });
+
+    if (!childProfile) throw new AppError(404, "Child not found");
+
     return prisma.goalAssignment.findMany({
-      where: { childId },
+      where: {
+        childId: childProfile.id,
+        isDeleted: false
+      },
       include: {
         goal: true,
       },
     });
   },
+
+
+updateProgress: async (payload: {
+  goalId: string;
+  userId: string;
+  minutesCompleted: number;
+}) => {
+  return prisma.$transaction(async (tx) => {
+    // 1. Get child profile
+    const child = await tx.childProfile.findUnique({
+      where: { userId: payload.userId },
+    });
+    if (!child) throw new AppError(404, "Child profile not found");
+
+    // 2. Get assignment
+    const assignment = await tx.goalAssignment.findUnique({
+      where: {
+        goalId_childId: {
+          goalId: payload.goalId,
+          childId: child.id,
+        },
+      },
+      include: { goal: true },
+    });
+
+    if (!assignment) throw new AppError(404, "Goal assignment not found");
+    if (assignment.goal.status === "PAUSED")
+      throw new AppError(400, "Goal is paused");
+
+    if (payload.minutesCompleted <= 0)
+      throw new AppError(400, "minutesCompleted must be > 0");
+
+    const duration = assignment.goal.durationMin || 0;
+    if (duration <= 0)
+      throw new AppError(400, "Goal duration is not set");
+
+    // Convert progress % back to minutes
+    let currentMinutes = Math.round((assignment.progress / 100) * duration);
+
+    // Clamp minutes to avoid cheating
+    let newMinutes = Math.min(
+      currentMinutes + payload.minutesCompleted,
+      duration
+    );
+
+    const newPercent = Math.round((newMinutes / duration) * 100);
+    const childCompleted = newPercent >= 100;
+
+    // 3. Update assignment progress
+    const updatedAssignment = await tx.goalAssignment.update({
+      where: { id: assignment.id },
+      data: {
+        progress: newPercent,
+      },
+    });
+
+    // 4. Recalculate global goal progress (average of all child progresses)
+    const allAssignments = await tx.goalAssignment.findMany({
+      where: { goalId: payload.goalId, isDeleted: false },
+      select: { progress: true },
+    });
+
+    const totalChildren = allAssignments.length;
+    const completedCount = allAssignments.filter((a) => a.progress >= 100).length;
+
+    const averageProgress =
+      Math.round(
+        allAssignments.reduce((sum, a) => sum + a.progress, 0) /
+          totalChildren
+      ) || 0;
+
+    const globalCompleted = completedCount === totalChildren;
+
+    const rewardCoins = globalCompleted
+      ? assignment.goal.rewardCoins || 0
+      : 0;
+
+    // 5. Update global goal
+    await tx.goal.update({
+      where: { id: payload.goalId },
+      data: {
+        progress: averageProgress,
+        status: globalCompleted ? GoalStatus.COMPLETED : assignment.goal.status,
+      },
+    });
+
+    // 6. If child completed, give coins
+    if (childCompleted) {
+      await tx.childProfile.update({
+        where: { id: child.id },
+        data: {
+          coins: child.coins + (assignment.goal.rewardCoins || 0),
+        },
+      });
+    }
+
+    return {
+      childProgressPercent: newPercent,
+      childMinutesLogged: newMinutes,
+      childCompleted,
+      goalStatus: globalCompleted ? "COMPLETED" : assignment.goal.status,
+      rewardGiven: childCompleted ? assignment.goal.rewardCoins : 0,
+      averageProgress,
+      completedCount,
+      totalChildren,
+    };
+  });
+},
+
 };
