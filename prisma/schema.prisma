@@ -129,12 +129,14 @@ model GoalAssignment {
   goalId  String
   childId String
 
-  minutesCompleted Int @default(0) // raw minutes
-  progress         Int @default(0) // percentage
+  minutesCompleted Int? @default(0) 
+ progressAvg Int? @default(0)
 
-  percentage    Int       @default(0) // % progress (0–100)
-  lastResetAt   DateTime? // when this child last reset
-  lastUpdatedAt DateTime  @updatedAt
+
+  percentage    Int?      @default(0)
+  lastResetAt   DateTime? 
+lastUpdatedAt DateTime? @default(now()) @db.Timestamptz(6)
+
 
   isDeleted Boolean      @default(false)
   child     ChildProfile @relation(fields: [childId], references: [id])
