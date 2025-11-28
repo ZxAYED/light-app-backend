@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "UserRole" AS ENUM ('PARENT', 'CHILD', 'ADMIN');
+
 
 -- CreateEnum
 CREATE TYPE "Relation" AS ENUM ('FATHER', 'MOTHER', 'BROTHER', 'SISTER');
