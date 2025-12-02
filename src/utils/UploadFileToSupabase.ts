@@ -4,7 +4,7 @@ import AppError from "../app/Errors/AppError";
 
 dotenv.config();
 
-const BUCKET = process.env.SUPABASE_BUCKET || "shalana07";
+  const BUCKET = "shalana07";  
 
 export const supabase = createClient(
   process.env.SUPABASE_PROJECT_URL!,
@@ -16,7 +16,7 @@ export async function uploadImageToSupabase(
   fileName: string,
   oldPath?: string | null
 ) {
-  const BUCKET = "shalana07";  
+
 
  
   if (!file || !file.buffer) {
@@ -55,8 +55,21 @@ console.log("File received:", {
   hasBuffer: !!file.buffer
 });
 return {
-  url: `${process.env.SUPABASE_PROJECT_URL}/storage/v1/object/public/${BUCKET}/${newPath}`,
+  // url: `${process.env.SUPABASE_PROJECT_URL}/storage/v1/object/public/${BUCKET}/${newPath}`,
+  url: data.publicUrl,
   path: newPath,
 };
 
+}
+export async function deleteImageFromSupabase(path: string) {
+  if (!path) { 
+    throw new AppError(400, "No Path Found to Delete")
+  };
+
+  const { error } = await supabase.storage.from(BUCKET).remove([path]);
+
+  if (error) {
+    console.error("Supabase delete error:", error);
+    throw new AppError(400, error.message);
+  }
 }

@@ -86,6 +86,7 @@ model ChildProfile {
   Notification     Notification[]
   PushToken        PushToken[]
   goalProgressLogs GoalProgressLog[]
+  childAvatars     ChildAvatar[]
 
   @@index([parentId])
   @@index([userId])
@@ -209,44 +210,130 @@ model HelpRequestMessage {
   @@index([senderId])
 }
 
-model ChildAsset {
+enum AvatarGender {
+  MALE
+  FEMALE
+}
+
+enum AssetCategory {
+  HAIR
+  DRESS
+  JEWELRY
+  EYES
+  SKIN
+  NOSE
+  SHOES
+  ACCESSORY
+  PET
+  AVATAR_BASE
+  FACE
+}
+
+enum AssetGender {
+  MALE
+  FEMALE
+  UNISEX
+}
+
+enum Rarity {
+  COMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+model Avatar {
+  id           String       @id @default(uuid())
+  avatarImgUrl String?
+  avatarImgPath String?
+  gender       AvatarGender
+  origin       String?
+  region       String?
+  description  String?
+  purchased       Int?          @default(0)
+  price        Int?          @default(0)
+  createdAt    DateTime     @default(now())
+  categories    AvatarCategory[]
+  ownerships    ChildAvatar[]
+  childProfiles ChildProfile[]
+}
+
+model AvatarCategory {
+  id          String             @id @default(uuid())
+  avatarId    String
+  name        AvatarCategoryType
+  avatar Avatar       @relation(fields: [avatarId], references: [id])
+  styles AssetStyle[]
+  @@unique([avatarId, name])  
+}
+
+enum AvatarCategoryType {
+  SKIN
+  HAIR
+  EYES
+  NOSE
+  DRESS
+  SHOES
+  ACCESSORY
+  JEWELRY
+  PET
+}
+
+model AssetStyle {
+  id          String   @id @default(uuid())
+  categoryId  String
+  styleName   String
+  description String?
+ 
+  createdAt   DateTime @default(now())
+
+  category AvatarCategory @relation(fields: [categoryId], references: [id])
+  colors   Asset[]
+}
+
+model Asset {
   id        String       @id @default(uuid())
+  styleId   String
+   assetImage     String
+  assetImgPath String?
+  colorName String?
+    description  String?
+  gender    AssetGender?
+  price     Int          @default(0)
+  rarity    Rarity? @default(COMMON)
+  isStarter Boolean      @default(false)
+ purchased       Int?          @default(0)
+  createdAt DateTime     @default(now())
+
+  style         AssetStyle     @relation(fields: [styleId], references: [id])
+  unlocked      ChildAsset[]
+  notifications Notification[]
+}
+
+model ChildAsset {
+  id        String   @id @default(uuid())
   childId   String
   assetId   String
-  createdAt DateTime     @default(now())
-  asset     Asset        @relation(fields: [assetId], references: [id])
-  child     ChildProfile @relation(fields: [childId], references: [id])
+  createdAt DateTime @default(now())
+
+  child ChildProfile @relation(fields: [childId], references: [id])
+  asset Asset        @relation(fields: [assetId], references: [id])
 
   @@unique([childId, assetId])
 }
 
-model Asset {
-  id           String         @id @default(uuid())
-  name         String
-  category     AssetCategory
-  style        String?
-  colorName    String?
-  image        String
-  imagePath    String?
-  price        Int
-  origin       String?
-  gender       AssetGender?
-  avatarId     String?
-  createdAt    DateTime       @default(now())
-  avatar       Avatar?        @relation(fields: [avatarId], references: [id])
-  unlockedBy   ChildAsset[]
-  Notification Notification[]
-}
+model ChildAvatar {
+  id         String   @id @default(uuid())
+  childId    String
+  avatarId   String
+  isActive   Boolean  @default(false)
+  unlockedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
 
-model Avatar {
-  id        String         @id @default(uuid())
-  name      String
-  image     String
-  origin    String?
-  gender    AvatarGender
-  createdAt DateTime       @default(now())
-  assets    Asset[]
-  usedBy    ChildProfile[]
+  child  ChildProfile @relation(fields: [childId], references: [id])
+  avatar Avatar       @relation(fields: [avatarId], references: [id])
+
+  @@unique([childId, avatarId])
 }
 
 model PushToken {
@@ -334,30 +421,6 @@ enum HelpStatus {
   ACTIVE
   RESOLVED
   CLOSED
-}
-
-enum AssetCategory {
-  SKIN
-  HAIR
-  EYES
-  NOSE
-  DRESS
-  SHOES
-  ACCESSORY
-  JEWELRY
-  PET
-  AVATAR_BASE
-}
-
-enum AssetGender {
-  MALE
-  FEMALE
-  UNISEX
-}
-
-enum AvatarGender {
-  MALE
-  FEMALE
 }
 
 enum Platform {
