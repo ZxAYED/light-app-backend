@@ -7,16 +7,16 @@ import prisma from "../../../shared/prisma";
 import AppError from "../../Errors/AppError";
 
 
-import { User, UserRole } from "@prisma/client";
+import { GoalStatus, User, UserRole } from "@prisma/client";
 import { sendOtpEmail } from "../../../utils/sendOtpEmail";
 import { sendPasswordResetOtp } from "../../../utils/sendResetPasswordOtp";
-import { CreateChildInput, CreateUserInput } from './auth.validation';
+import { CreateAdminInput, CreateChildInput, CreateUserInput } from './auth.validation';
 
 const createUser = async (payload: CreateUserInput) => {
 
   // Step 1: Check if user already exists
   const isUserExist = await prisma.user.findFirst({
-    where: { email: payload.email },
+    where: { email: payload.email ,isDeleted:false},
   });
 
   if (isUserExist) {
@@ -63,6 +63,43 @@ const createUser = async (payload: CreateUserInput) => {
   })
 
   return transaction;
+};
+
+const createAdmin = async (payload: CreateAdminInput) => {
+  const isUserExist = await prisma.user.findFirst({
+    where: { email: payload.email },
+  });
+
+  if (isUserExist) {
+    throw new AppError(status.CONFLICT, "User Already Exist");
+  }
+
+  const hashedPassword = await bcrypt.hash(payload.password as string, 12);
+
+
+
+  return await prisma.user.create({
+    data: {
+      email: payload.email,
+      password: hashedPassword,
+      role: UserRole.ADMIN,
+      is_verified: true,
+      name: payload.name,
+    } as any,
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      is_verified: true,
+    },
+  });
+
+
+
+
+
+
+
 };
 
 
@@ -182,13 +219,12 @@ const loginUser = async (payload: { email: string; password: string }) => {
           }
         }
       }
-     
+
     })
   }
   else if (user.role === UserRole.CHILD) {
     profile = await prisma.childProfile.findFirst({
       where: { userId: user.id },
-     
     });
   }
   else {
@@ -208,7 +244,7 @@ const loginUser = async (payload: { email: string; password: string }) => {
   );
 
   const refreshToken = jwtHelpers.generateToken(
-  {
+    {
       id: user.id,
       email: user.email,
       profile,
@@ -503,21 +539,21 @@ const updateParent = async (payload: Partial<any> & { image?: string, imagePath?
 };
 const deleteChild = async (childId: string) => {
 
-   return  prisma.$transaction(async (tx) => {
-   const result = await prisma.childProfile.update({
-    where: { id: childId },
-    data: {
-      isDeleted: true,
-    }
-  });
+  return prisma.$transaction(async (tx) => {
+    const result = await tx.childProfile.update({
+      where: { id: childId },
+      data: {
+        isDeleted: true,
+      }
+    });
     await tx.user.update({
       where: { id: result.userId },
       data: {
         isDeleted: true,
       }
     });
-})
- 
+  })
+
 };
 const deleteParent = async (parentId: string) => {
   const parent = await prisma.parentProfile.findFirst({
@@ -526,7 +562,7 @@ const deleteParent = async (parentId: string) => {
   if (!parent) {
     throw new AppError(status.NOT_FOUND, "Parent not found");
   }
-  return  prisma.$transaction(async (tx) => {
+  return prisma.$transaction(async (tx) => {
     await tx.parentProfile.update({
       where: { id: parentId },
       data: {
@@ -560,48 +596,81 @@ const getAllChild = async (userId: string) => {
     }
   });
 
-  return  children ;
+  return children;
 };
 const getProfile = async (user: User) => {
-  let result
-if(user.role === UserRole.PARENT){
- result = await prisma.user.findUnique({
-    where: { id: user.id },
-    include: {
-      parentProfile: {
-        include:{
-          children: true
-        }
-      },
-    
-    }
-  }) 
-}
-if(user.role === UserRole.CHILD){
- result = await prisma.user.findUnique({
-    where: { id: user.id },
-  
-    include: {
-    
-      childProfile: {
-        include: {
-          parent:true
-        }
-      },
-    }
-  }) 
-}
-if(user.role === UserRole.ADMIN){
- result = await prisma.user.findUnique({
-    where: { id: user.id },
-   
-  }) 
-}
-  
-  
 
- 
-  return  result ;
+  let result
+  if (user.role === UserRole.PARENT) {
+    result = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: {
+        parentProfile: {
+          include: {
+            children: true
+          }
+        },
+
+      }
+    })
+  }
+  if (user.role === UserRole.CHILD) {
+    const base = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: {
+        childProfile: {
+          include: { parent: true }
+        },
+      },
+    });
+
+    const childId = base?.childProfile?.id;
+    if (!childId) throw new AppError(status.NOT_FOUND, "Child not found");
+
+    const [assignedTasks, activeTasks, completedTasks] = await Promise.all([
+      prisma.goalAssignment.count({
+        where: { childId, isDeleted: false },
+      }),
+      prisma.goalAssignment.count({
+        where: {
+          childId,
+          isDeleted: false,
+          goal: { status: GoalStatus.ACTIVE, isDeleted: false },
+        },
+      }),
+      prisma.goalAssignment.count({
+        where: {
+          childId,
+          isDeleted: false,
+          OR: [
+            { percentage: { gte: 100 } },
+            { goal: { status: GoalStatus.COMPLETED } },
+          ],
+        },
+      }),
+    ]);
+
+    result = {
+      ...base,
+      childProfile: {
+        ...base!.childProfile!,
+        assignedTasks,
+        activeTasks,
+        completedTasks,
+      },
+    } as any;
+  }
+  if (user.role === UserRole.ADMIN) {
+    result = await prisma.user.findUnique({
+      where: { id: user.id },
+
+    })
+  }
+
+
+
+
+  return result;
 };
 
 
@@ -640,9 +709,9 @@ const getAllSiblings = async (childUserId: string) => {
 
 
 export const UserService = {
-  createUser,getAllSiblings,
-  loginUser,getProfile,
-  resendOtp,getAllChild,
+  createUser, createAdmin, getAllSiblings,
+  loginUser, getProfile,
+  resendOtp, getAllChild,
   deleteParent,
   refreshAccessToken,
   verifyOtp,

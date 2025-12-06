@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shalana07 Backend</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: radial-gradient(circle at top, #161f38, #05060a 70%);
+        --card-bg: rgba(8, 12, 20, 0.75);
+        --accent: #61f6d0;
+        --accent-2: #56a5ff;
+        --text: #eef3ff;
+        --muted: #9aa3b8;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 32px;
+      }
+      main {
+        width: min(960px, 100%);
+      }
+      .hero-card {
+        background: var(--card-bg);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 32px;
+        padding: 48px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 40px 80px rgba(0, 0, 0, 0.35);
+        backdrop-filter: blur(40px);
+      }
+      .hero-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at top right, rgba(97, 246, 208, 0.25), transparent 45%);
+        pointer-events: none;
+      }
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 999px;
+        background: rgba(97, 246, 208, 0.1);
+        color: var(--accent);
+        font-weight: 600;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      h1 {
+        font-size: clamp(2rem, 4vw, 3.4rem);
+        margin: 16px 0 8px;
+        text-transform: lowercase;
+      }
+      .subtitle {
+        color: var(--muted);
+        font-size: 1.05rem;
+        margin-bottom: 32px;
+      }
+      .profile {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 32px;
+      }
+      .profile img {
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        border: 3px solid rgba(255, 255, 255, 0.4);
+        object-fit: cover;
+        box-shadow: 0 20px 30px rgba(0, 0, 0, 0.4);
+      }
+      .profile-details {
+        flex: 1;
+        min-width: 220px;
+        display: grid;
+        gap: 12px;
+      }
+      .profile-details span {
+        color: var(--muted);
+        font-size: 0.9rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .profile-details strong {
+        display: block;
+        font-size: 1.35rem;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .portfolio-link {
+        display: inline-flex;
+        width: fit-content;
+        margin-top: 32px;
+        padding: 14px 28px;
+        border-radius: 999px;
+        background: linear-gradient(120deg, var(--accent), var(--accent-2));
+        color: #041420;
+        font-weight: 600;
+        text-decoration: none;
+        letter-spacing: 0.05em;
+        box-shadow: 0 20px 30px rgba(97, 246, 208, 0.35);
+      }
+      .portfolio-link:hover {
+        transform: scale(1.03);
+        cursor: pointer;
+        box-shadow: 0 20px 30px rgba(97, 246, 208, 0.5);
+        transition: transform 300ms ease-in-out, box-shadow 300ms ease-in-out;
+      }
+      @media (max-width: 640px) {
+        .hero-card {
+          padding: 32px 24px;
+        }
+        .profile {
+          flex-direction: column;
+          text-align: center;
+        }
+        .portfolio-link {
+          margin-left: auto;
+          margin-right: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="hero-card">
+        <div class="status-pill">Server Status - Online</div>
+        <h1>shalana07 project</h1>
+        <p class="subtitle">
+          Developed By  Zayed - Fullstack developer
+        </p>
+        <div class="profile">
+          <img src="https://res.cloudinary.com/dhl04adhz/image/upload/v1762144594/fb_xkf7o8.jpg" alt="Portrait of Zayed" />
+          <div class="profile-details">
+            <div>
+              <span>Backend Dev</span>
+              <strong>Zayed</strong>
+            </div>
+          
+            <div>
+              <span>Portfolio</span>
+              <strong>https://zayed-portfolio-app.netlify.app</strong>
+            </div>
+          </div>
+        </div>
+        <a
+          class="portfolio-link"
+          href="https://zayed-portfolio-app.netlify.app"
+          target="_blank"
+          rel="noreferrer noopener"
+        >
+          View Portfolio ->
+        </a>
+      </section>
+    </main>
+  </body>
+</html>

@@ -11,6 +11,7 @@ model User {
   id                     String               @id @default(uuid())
   email                  String               @unique
   password               String
+  name                   String?
   role                   UserRole             @default(PARENT)
   createdAt              DateTime             @default(now())
   otp                    String?
@@ -67,6 +68,7 @@ model ChildProfile {
   location         String?
   image            String?
   imagePath        String?
+  completedTask    Int?           @default(0)
   coins            Int               @default(0)
   relation         String?
   editProfile      Boolean           @default(true)
@@ -243,28 +245,32 @@ enum Rarity {
 }
 
 model Avatar {
-  id           String       @id @default(uuid())
-  avatarImgUrl String?
+  id            String       @id @default(uuid())
+  avatarImgUrl  String?
   avatarImgPath String?
-  gender       AvatarGender
-  origin       String?
-  region       String?
-  description  String?
-  purchased       Int?          @default(0)
-  price        Int?          @default(0)
-  createdAt    DateTime     @default(now())
+  gender        AvatarGender
+
+  region        String?
+  description   String?
+  purchased     Int?             @default(0)
+  price         Int?             @default(0)
+  createdAt     DateTime         @default(now())
   categories    AvatarCategory[]
   ownerships    ChildAvatar[]
   childProfiles ChildProfile[]
+
+  @@index([gender])
+  @@index([region])
 }
 
 model AvatarCategory {
   id          String             @id @default(uuid())
   avatarId    String
-  name        AvatarCategoryType
-  avatar Avatar       @relation(fields: [avatarId], references: [id])
-  styles AssetStyle[]
-  @@unique([avatarId, name])  
+  type        AvatarCategoryType
+  avatar      Avatar             @relation(fields: [avatarId], references: [id])
+  assetStyles AssetStyle[]
+
+  @@unique([avatarId, type])
 }
 
 enum AvatarCategoryType {
@@ -280,30 +286,33 @@ enum AvatarCategoryType {
 }
 
 model AssetStyle {
-  id          String   @id @default(uuid())
+  id          String  @id @default(uuid())
   categoryId  String
   styleName   String
   description String?
- 
-  createdAt   DateTime @default(now())
+
+  createdAt DateTime @default(now())
 
   category AvatarCategory @relation(fields: [categoryId], references: [id])
   colors   Asset[]
+
+  @@index([categoryId])
+  @@index([styleName])
 }
 
 model Asset {
-  id        String       @id @default(uuid())
-  styleId   String
-   assetImage     String
+  id           String       @id @default(uuid())
+  styleId      String
+  assetImage   String
   assetImgPath String?
-  colorName String?
-    description  String?
-  gender    AssetGender?
-  price     Int          @default(0)
-  rarity    Rarity? @default(COMMON)
-  isStarter Boolean      @default(false)
- purchased       Int?          @default(0)
-  createdAt DateTime     @default(now())
+  colorName    String?
+  description  String?
+  gender       AssetGender?
+  price        Int          @default(0)
+  rarity       Rarity?      @default(COMMON)
+  isStarter    Boolean      @default(false)
+  purchased    Int?         @default(0)
+  createdAt    DateTime     @default(now())
 
   style         AssetStyle     @relation(fields: [styleId], references: [id])
   unlocked      ChildAsset[]

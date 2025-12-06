@@ -1,37 +1,33 @@
 import cors from "cors";
 import express, { Application, NextFunction, Request, Response } from "express";
+import path from "path";
 
 import cookieParser from "cookie-parser";
 import status from "http-status";
-import swaggerUi from "swagger-ui-express";
-import { openapiSpec } from "./app/docs/swagger";
 import globalErrorHandler from "./app/middlewares/globalErrorHandler";
 import router from "./app/routes";
 
 const app: Application = express();
+const publicDir = path.join(__dirname, "..", "public");
+
 
 app.use(cors({
-  origin: ["*","http://localhost:5173"],
+  origin: ["*","http://localhost:5173","https://shalana07-backend.onrender.com","https://ligth-backend.up.railway.app"],
   credentials: true,
 }));
 
 app.use(cookieParser());
-
-// parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static(publicDir, { index: false }));
 
 app.use("/api", router);
-// Swagger UI
-app.use("", swaggerUi.serve, swaggerUi.setup(openapiSpec, { explorer: true }));
-// Raw JSON spec
-app.get("/api-docs.json", (_req, res) => {
-  res.json(openapiSpec);
-});
+
+
 app.use(globalErrorHandler);
 
 app.get("/", (req: Request, res: Response) => {
-  res.send("Shalana Server  is running  🎉🎉");
+  res.sendFile(path.join(publicDir, "index.html"));
 });
 
 app.use((req: Request, res: Response, next: NextFunction) => {

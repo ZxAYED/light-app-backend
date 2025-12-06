@@ -8,6 +8,7 @@ import validateFormData from "../../middlewares/ValidationFormdataParser";
 import validateResource from "../../middlewares/ValidationParser";
 import {
   changePasswordSchema,
+  createAdminSchema,
   createChildSchema,
   createUserSchema,
   loginSchema,
@@ -25,11 +26,16 @@ router.post(
   validateResource(createUserSchema),
   UserController.createUser
 );
+router.post(
+  "/create-admin",
+  validateResource(createAdminSchema),
+  UserController.createAdmin
+);
 
 router.post(
   "/create-child",
   RoleValidation(UserRole.PARENT),
-  upload.single("file"),                   // MUST COME BEFORE validateFormData
+  upload.single("file"),                   
   validateFormData(createChildSchema),
   UserController.createChild
 );
@@ -112,7 +118,7 @@ router.delete(
   UserController.deleteChild
 );
 
-router.delete(
+router.patch(
   "/delete-parent",
   RoleValidation(UserRole.PARENT),
   UserController.deleteParent
