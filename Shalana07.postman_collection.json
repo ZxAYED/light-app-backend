@@ -1,0 +1,861 @@
+{
+	"info": {
+		"_postman_id": "60aaece1-e83e-4bcd-aa71-14d307383e45",
+		"name": "Shalana07",
+		"description": "# 🚀 Get started here\n\nThis template guides you through CRUD operations (GET, POST, PUT, DELETE), variables, and tests.\n\n## 🔖 **How to use this template**\n\n#### **Step 1: Send requests**\n\nRESTful APIs allow you to perform CRUD operations using the POST, GET, PUT, and DELETE HTTP methods.\n\nThis collection contains each of these [request](https://learning.postman.com/docs/sending-requests/requests/) types. Open each request and click \"Send\" to see what happens.\n\n#### **Step 2: View responses**\n\nObserve the response tab for status code (200 OK), response time, and size.\n\n#### **Step 3: Send new Body data**\n\nUpdate or add new data in \"Body\" in the POST request. Typically, Body data is also used in PUT request.\n\n```\n{\n    \"name\": \"Add your name in the body\"\n}\n\n ```\n\n#### **Step 4: Update the variable**\n\nVariables enable you to store and reuse values in Postman. We have created a [variable](https://learning.postman.com/docs/sending-requests/variables/) called `base_url` with the sample request [https://postman-api-learner.glitch.me](https://postman-api-learner.glitch.me). Replace it with your API endpoint to customize this collection.\n\n#### **Step 5: Add tests in the \"Scripts\" tab**\n\nAdding tests to your requests can help you confirm that your API is working as expected. You can write test scripts in JavaScript and view the output in the \"Test Results\" tab.\n\n<img src=\"https://content.pstmn.io/fa30ea0a-373d-4545-a668-e7b283cca343/aW1hZ2UucG5n\" width=\"2162\" height=\"1530\">\n\n## 💪 Pro tips\n\n- Use folders to group related requests and organize the collection.\n    \n- Add more [scripts](https://learning.postman.com/docs/writing-scripts/intro-to-scripts/) to verify if the API works as expected and execute workflows.\n    \n\n## 💡Related templates\n\n[API testing basics](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=e9a37a28-055b-49cd-8c7e-97494a21eb54&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)  \n[API documentation](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=e9c28f47-1253-44af-a2f3-20dce4da1f18&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)  \n[Authorization methods](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=31a9a6ed-4cdf-4ced-984c-d12c9aec1c27&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "39781146",
+		"_collection_link": "https://next-level-4-arms-team.postman.co/workspace/Team-Workspace~8e12135a-9505-41ce-8b0f-eb129435841e/collection/39781146-60aaece1-e83e-4bcd-aa71-14d307383e45?action=share&source=collection_link&creator=39781146"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "admin",
+					"item": [
+						{
+							"name": "create Admin",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"email\": \"vevkxj0nij@jkotypc.com\",\r\n    \"password\": \"123456\",\r\n    \"name\": \"Zxayed\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base-url}}/auth/create-admin",
+									"host": [
+										"{{base-url}}"
+									],
+									"path": [
+										"auth",
+										"create-admin"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "// {\r\n//     \"email\": \"child1@gmail.com\",\r\n//     \"password\": \"123456\"\r\n// }\r\n{\r\n    \"email\": \"1m8c0yoe9c@daouse.com\",\r\n    \"password\": \"123456\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base-url}}/auth/login",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get All childs of a Parent",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{parentToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base-url}}/auth/get-all-child",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"auth",
+								"get-all-child"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get my profile",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{parentToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base-url}}/auth/get-profile",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"auth",
+								"get-profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get All siblings of a child",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base-url}}/auth/get-all-siblings",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"auth",
+								"get-all-siblings"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create parent",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"vevkxj0nij@jkotypc.com\",\r\n    \"password\": \"123456\",\r\n    \"name\": \"Zxayed\",\r\n    \"phone\": \"1234567890\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base-url}}/auth/create-parent",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"auth",
+								"create-parent"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete parent",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{parentToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base-url}}/auth/delete-parent",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"auth",
+								"delete-parent"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Resend OTP",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"licicoy757@chaineor.com\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base-url}}/auth/resend-otp",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"auth",
+								"resend-otp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "verify otp",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"1m8c0yoe9c@daouse.com\",\r\n    \"otp\": \"50199\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base-url}}/auth/verify-otp",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"auth",
+								"verify-otp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create child",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{parentToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "data",
+									"value": "{\n    \"email\": \"child4@gmail.com\",\n    \"password\": \"123456\",\n    \"name\": \"Test Child \",\n    \"gender\": \"FEMALE\",\n    \"phone\": \"1234567890\",\n    \"relation\": \"Daughter\",\n    \"dateOfBirth\": \"2010-01-01T00:00:00.000Z\",\n    \"location\": \"New York\",\n    \"accountType\": \"MODERATOR\",\n    \"editProfile\": true,\n    \"createGoals\": true,\n    \"approveTasks\": true,\n    \"deleteGoals\": true,\n    \"deleteAccount\": true\n}",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/C:/Users/zzaye/Downloads/nuqs.webp"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base-url}}/auth/create-child",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"auth",
+								"create-child"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update child  by child Id",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "data",
+									"value": "{\"name\":\"WHostheBossChild\",\"gender\":\"FEMALE\",\"phone\":\"1234567890\",\"relation\":\"gay\",\"dateOfBirth\":\"2010-01-01T00:00:00.000Z\",\"location\":\"New York\",\"accountType\":\"MODERATOR\"}\n",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/C:/Users/zzaye/Downloads/reactBits.png"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base-url}}/auth/update-child/ebfef98a-4eb6-415f-bd0f-bf235dc25952",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"auth",
+								"update-child",
+								"ebfef98a-4eb6-415f-bd0f-bf235dc25952"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update parent by parent id",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{parentToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "data",
+									"value": "{\n  \"name\": \"John Doe\",\n  \"phone\": \"+8801789456123\",\n  \"dateOfBirth\": \"1985-06-15T00:00:00.000Z\",\n  \"location\": \"Dhaka, Bangladesh\",\n  \"pushNotification\": true,\n  \"dailyReminders\": false,\n  \"childTaskUpdates\": true\n}\n",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/C:/Users/zzaye/Downloads/reactBits.png"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base-url}}/auth/update-parent/e0ed33df-0825-4544-9803-d06fbbbd129f",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"auth",
+								"update-parent",
+								"e0ed33df-0825-4544-9803-d06fbbbd129f"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Token",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": ""
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete child by child id by parent",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{parentToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "data",
+									"value": "{\"name\":\"dsf Child\",\"gender\":\"FEMALE\",\"phone\":\"1234567890\",\"relation\":\"asdasdas\",\"dateOfBirth\":\"2010-01-01T00:00:00.000Z\",\"location\":\"New York\",\"accountType\":\"MODERATOR\"}\n",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": [],
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base-url}}/auth/delete-child/55da0a7a-f27c-4c0c-9206-3b326af12884",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"auth",
+								"delete-child",
+								"55da0a7a-f27c-4c0c-9206-3b326af12884"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "reset pass",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImZkZTU1YTY3LTYzYjItNDE2Yy1iMjZhLTEyYzEwZWQ0OWFmYiIsImVtYWlsIjoibGljaWNveTc1N0BjaGFpbmVvci5jb20iLCJwcm9maWxlIjp7ImlkIjoiZTU4MWRiZmItOTc5NS00MDUyLWE4ZWYtZWFkYTU5YWYyNzNmIiwibmFtZSI6IkpvaG4gRG9lIiwicGhvbmUiOiIxMjM0NTY3ODkwIiwicmVsYXRpb24iOm51bGwsImltYWdlIjpudWxsLCJkYXRlT2ZCaXJ0aCI6bnVsbCwibG9jYXRpb24iOm51bGx9LCJyb2xlIjoiUEFSRU5UIiwiaWF0IjoxNzYzNTUyOTM2LCJleHAiOjE3NjQ4NDg5MzZ9.t_pes07DggxaPRMcySKsZDDBSuCTG3s_BxxjWZS9W1M",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base-url}}/auth/reset-password",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"auth",
+								"reset-password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "request-reset-password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImZkZTU1YTY3LTYzYjItNDE2Yy1iMjZhLTEyYzEwZWQ0OWFmYiIsImVtYWlsIjoibGljaWNveTc1N0BjaGFpbmVvci5jb20iLCJwcm9maWxlIjp7ImlkIjoiZTU4MWRiZmItOTc5NS00MDUyLWE4ZWYtZWFkYTU5YWYyNzNmIiwibmFtZSI6IkpvaG4gRG9lIiwicGhvbmUiOiIxMjM0NTY3ODkwIiwicmVsYXRpb24iOm51bGwsImltYWdlIjpudWxsLCJkYXRlT2ZCaXJ0aCI6bnVsbCwibG9jYXRpb24iOm51bGx9LCJyb2xlIjoiUEFSRU5UIiwiaWF0IjoxNzYzNTUyOTM2LCJleHAiOjE3NjQ4NDg5MzZ9.t_pes07DggxaPRMcySKsZDDBSuCTG3s_BxxjWZS9W1M",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base-url}}/auth/request-reset-password",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"auth",
+								"request-reset-password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "change-password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{parentToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"oldPassword\": \"currentpassword123\",\r\n    \"newPassword\": \"newpassword123\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base-url}}/auth/change-password",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"auth",
+								"change-password"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Goals",
+			"item": [
+				{
+					"name": "create goal (child/parent)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{parentToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n       \"title\": \"kela daily math exercises\",\r\n       \"description\": \"Finish all exercises in Chapter 5.\",\r\n       \"type\": \"DAILY\",\r\n       \"rewardCoins\": 20,\r\n       \"startDate\": \"2025-11-23T00:00:00.000Z\",\r\n       \"endDate\": \"2025-11-30T00:00:00.000Z\",\r\n       \"durationMin\": 30,\r\n       \"assignedChildIds\": [\"55da0a7a-f27c-4c0c-9206-3b326af12884\",\"a026d907-722a-4ba2-86dc-a402c8838798\"]\r\n    }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base-url}}/goals/create-goal",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"goals",
+								"create-goal"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update goal (child/parent) with delete func",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"title\": \"kela daily math and science exercises\",\r\n    \"type\": \"DAILY\",\r\n    \"rewardCoins\": 50,\r\n    \"startDate\": \"2025-11-23T00:00:00Z\",\r\n    \"endDate\": \"2025-12-23T00:00:00Z\",\r\n    \"durationMin\": 30,\r\n    \"assignedChildIds\": [\r\n        \"a026d907-722a-4ba2-86dc-a402c8838798\"\r\n    ],\r\n    \"status\": \"ACTIVE\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base-url}}/goals/update-goal/b42aa46a-4399-457c-b2b9-3b68ccc20453",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"goals",
+								"update-goal",
+								"b42aa46a-4399-457c-b2b9-3b68ccc20453"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update progress of a goal",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"minutesCompleted\": 30\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base-url}}/goals/update-progress/b42aa46a-4399-457c-b2b9-3b68ccc20453",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"goals",
+								"update-progress",
+								"b42aa46a-4399-457c-b2b9-3b68ccc20453"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get parent goals",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{parentToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{base-url}}/goals/parent-goals",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"goals",
+								"parent-goals"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get child goals",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base-url}}/goals/child-goals",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"goals",
+								"child-goals"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "avatar",
+			"item": [
+				{
+					"name": "admin",
+					"item": [
+						{
+							"name": "create avatar",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{parentToken}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "data",
+											"value": "{\n  \"gender\": \"FEMALE\",\n  \"region\": \"Europe\",\n  \"description\": \"Cute avatar with classy vibe & smartness\",\n  \"price\": 550\n}\n",
+											"type": "text"
+										},
+										{
+											"key": "file",
+											"type": "file",
+											"src": []
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base-url}}/goals/create-goal",
+									"host": [
+										"{{base-url}}"
+									],
+									"path": [
+										"goals",
+										"create-goal"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "create style by avatar id",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{adminToken}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"avatarId\":\"e2a67cec-c4c3-4ca6-8e69-5f36c5a45e9a\",\r\n  \"type\": \"HAIR\",\r\n  \"styleName\": \"Silky\",\r\n  \"description\": \"Silky hairstyle with smooth texture\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base-url}}/avatar/style",
+									"host": [
+										"{{base-url}}"
+									],
+									"path": [
+										"avatar",
+										"style"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "create asset by style id",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{adminToken}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"avatarId\":\"e2a67cec-c4c3-4ca6-8e69-5f36c5a45e9a\",\r\n  \"type\": \"HAIR\",\r\n  \"styleName\": \"Silky\",\r\n  \"description\": \"Silky hairstyle with smooth texture\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base-url}}/avatar/style",
+									"host": [
+										"{{base-url}}"
+									],
+									"path": [
+										"avatar",
+										"style"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "id",
+			"value": "1",
+			"disabled": true
+		},
+		{
+			"key": "base_url",
+			"value": "https://template.postman-echo.com",
+			"disabled": true
+		}
+	]
+}

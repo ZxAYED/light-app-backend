@@ -19,6 +19,17 @@ const createUser: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+const createAdmin: RequestHandler = catchAsync(async (req, res) => {
+  const result = await UserService.createAdmin(req.body);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: "Admin created. OTP has been sent to your email.",
+    data: result,
+  });
+});
+
 const createChild: RequestHandler = catchAsync(async (req, res) => {
   const payload = { ...req.body } as any;
   payload.userId = (req as Request & { user?: User }).user?.id;
@@ -275,6 +286,7 @@ const getProfile = catchAsync(async (req: Request & { user?: User }, res) => {
 
 export const UserController = {
   createUser,
+  createAdmin,
   getProfile,
   loginUser,
   getAllSiblings,

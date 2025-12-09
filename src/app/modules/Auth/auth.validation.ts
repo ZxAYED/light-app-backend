@@ -49,6 +49,14 @@ export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export const GenderEnum = z.enum(["MALE", "FEMALE"]);
 export const ChildAccountTypeEnum = z.enum(["ADMIN", "MODERATOR", "VIEWER"]);
 
+// Admin creation schema (name optional)
+export const createAdminSchema = z.object({
+  email: z.string().email("Invalid email format"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  name: z.string().min(1).optional(),
+});
+export type CreateAdminInput = z.infer<typeof createAdminSchema>;
+
 // Main schema
 export const createChildSchema = z.object({
 

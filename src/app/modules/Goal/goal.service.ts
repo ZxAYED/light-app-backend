@@ -243,9 +243,11 @@ updateProgress: async (payload: {
 
     const newPercent = Math.round((newMinutes / duration) * 100);
     const childCompleted = newPercent >= 100;
+    const previouslyCompleted = (assignment.percentage ?? 0) >= 100;
+    const justCompleted = childCompleted && !previouslyCompleted;
 
     // 3. Update assignment progress
-    const updatedAssignment = await tx.goalAssignment.update({
+ await tx.goalAssignment.update({
       where: { id: assignment.id },
       data: {
         percentage: newPercent,
@@ -269,9 +271,9 @@ updateProgress: async (payload: {
 
     const globalCompleted = completedCount === totalChildren;
 
-    const rewardCoins = globalCompleted
-      ? assignment.goal.rewardCoins || 0
-      : 0;
+    // const rewardCoins = globalCompleted
+    //   ? assignment.goal.rewardCoins || 0
+    //   : 0;
 
     // 5. Update global goal
     await tx.goal.update({
@@ -282,12 +284,13 @@ updateProgress: async (payload: {
       },
     });
 
-    // 6. If child completed, give coins
-    if (childCompleted) {
+    // 6. If child just completed, give coins and increment completedTask
+    if (justCompleted) {
       await tx.childProfile.update({
         where: { id: child.id },
         data: {
-          coins: child.coins + (assignment.goal.rewardCoins || 0),
+          coins: { increment: assignment.goal.rewardCoins || 0 },
+          completedTask: { increment: 1 },
         },
       });
     }
@@ -297,7 +300,7 @@ updateProgress: async (payload: {
       childMinutesLogged: newMinutes,
       childCompleted,
       goalStatus: globalCompleted ? "COMPLETED" : assignment.goal.status,
-      rewardGiven: childCompleted ? assignment.goal.rewardCoins : 0,
+      rewardGiven: justCompleted ? assignment.goal.rewardCoins : 0,
       averageProgress,
       completedCount,
       totalChildren,
