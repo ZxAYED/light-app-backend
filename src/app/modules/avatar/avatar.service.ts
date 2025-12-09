@@ -292,11 +292,28 @@ const getOwnedAvatarsForChild = async (childUserId: string) => {
   });
   if (!child) throw new AppError(404, "Child not found");
 
-  const ownerships = await prisma.childAvatar.findMany({
+  let ownerships = await prisma.childAvatar.findMany({
     where: { childId: child.id },
     include: { avatar: true },
     orderBy: { createdAt: "desc" },
   });
+
+  const hasActive = ownerships.some((o) => o.isActive);
+  if (!hasActive && ownerships.length > 0) {
+    const oldest = await prisma.childAvatar.findFirst({
+      where: { childId: child.id },
+      orderBy: { createdAt: "asc" },
+    });
+    if (oldest) {
+      await prisma.childAvatar.updateMany({ where: { childId: child.id }, data: { isActive: false } });
+      await prisma.childAvatar.update({ where: { id: oldest.id }, data: { isActive: true } });
+      ownerships = await prisma.childAvatar.findMany({
+        where: { childId: child.id },
+        include: { avatar: true },
+        orderBy: { createdAt: "desc" },
+      });
+    }
+  }
 
   const equipped = ownerships.find((o) => o.isActive)?.avatar || null;
   const unequipped = ownerships.filter((o) => !o.isActive).map((o) => o.avatar);
@@ -312,13 +329,28 @@ const getAssetsByStyle = async (styleId: string) => {
   });
 };
 
-const getAssetsByCategoryType = async (type: string) => {
+const getAssetsByCategoryType = async (type: string, childUserId?: string) => {
   const raw = (type || "").trim();
   if (!raw) throw new AppError(400, "category type missing");
+
+  let ownedIds: string[] = [];
+  if (childUserId) {
+    const child = await prisma.childProfile.findFirst({
+      where: { userId: childUserId },
+      select: { id: true },
+    });
+    if (!child) throw new AppError(404, "Child not found");
+    const ownedAssets = await prisma.childAsset.findMany({
+      where: { childId: child.id },
+      select: { assetId: true },
+    });
+    ownedIds = ownedAssets.map((a) => a.assetId);
+  }
 
   const normalized = raw.toUpperCase().replace(/\s+|_/g, "");
   if (normalized === "TRENDING") {
     return prisma.asset.findMany({
+      where: ownedIds.length ? { id: { notIn: ownedIds } } : {},
       include: { style: { include: { category: true } } },
       orderBy: [{ purchased: "desc" }, { createdAt: "desc" }],
       take: 10,
@@ -343,8 +375,10 @@ const getAssetsByCategoryType = async (type: string) => {
     throw new AppError(400, `Invalid category type: ${type}`);
   }
 
+  const whereFilter = ownedIds.length ? { id: { notIn: ownedIds } } : {};
   return prisma.asset.findMany({
     where: {
+      ...whereFilter,
       style: {
         category: {
           type: categoryType,
@@ -361,7 +395,7 @@ const getAssetsByCategoryType = async (type: string) => {
 const getCustomizationData = async (
   childUserId: string,
   avatarId: string,
- 
+
 ) => {
   const child = await prisma.childProfile.findFirst({
     where: { userId: childUserId },
@@ -426,12 +460,12 @@ const getCustomizationData = async (
     const elements = category.assetStyles.map((style) => {
       const colors = style.colors.map((asset) => {
         const isUnlocked = unlockedAssetIds.has(asset.id) || asset.isStarter;
-      
+
         return {
           id: asset.id,
           url: asset.assetImage,
           isUnlocked,
-       
+
           isSelected: equippedAssetIds.has(asset.id),
           price: asset.price,
         };
@@ -526,13 +560,13 @@ const purchaseAvatar = async (childUserId: string, avatarId: string) => {
 
     if ((child.coins || 0) < price) throw new AppError(400, "Insufficient coins");
 
-    
+
     await tx.childProfile.update({ where: { id: child.id }, data: { coins: { decrement: price } } });
 
 
     const ownership = await tx.childAvatar.create({ data: { childId: child.id, avatarId, isActive: false } });
 
-    
+
     return { ownershipId: ownership.id };
   });
 };
@@ -546,7 +580,17 @@ const unlockAssetsForChild = async (childUserId: string, assetIds: string[]) => 
     if (!child) throw new AppError(404, "Child not found");
     const assets = await tx.asset.findMany({
       where: { id: { in: assetIds } },
-      select: { id: true, style: { select: { category: { select: { avatarId: true } } } } },
+      select: {
+        id: true,
+        style: {
+          select:
+          {
+            category: {
+              select: { avatarId: true }
+            }
+          }
+        }
+      },
     });
     if (assets.length !== assetIds.length) throw new AppError(404, "One or more assets not found");
     const pairs = assets.map((a) => ({ assetId: a.id, avatarId: a.style?.category?.avatarId }));
@@ -557,7 +601,10 @@ const unlockAssetsForChild = async (childUserId: string, assetIds: string[]) => 
     const requiredAvatarIds = Array.from(new Set(pairs.map((p) => p.avatarId as string)));
     if (requiredAvatarIds.length > 0) {
       const owned = await tx.childAvatar.findMany({
-        where: { childId: child.id, avatarId: { in: requiredAvatarIds } },
+        where: {
+          childId: child.id,
+          avatarId: { in: requiredAvatarIds }
+        },
         select: { avatarId: true },
       });
       const ownedSet = new Set(owned.map((o) => o.avatarId));
@@ -567,8 +614,21 @@ const unlockAssetsForChild = async (childUserId: string, assetIds: string[]) => 
         throw new AppError(400, `You Dont Own this Avatar(s): ${detail}`);
       }
     }
-    await tx.childAsset.createMany({ data: assets.map((a) => ({ childId: child.id, assetId: a.id })), skipDuplicates: true });
-    return { unlockedCount: assets.length };
+    const alreadyOwned = await tx.childAsset.findMany({
+      where: { childId: child.id, assetId: { in: assets.map((a) => a.id) } },
+      select: { assetId: true },
+    });
+    const ownedSet = new Set(alreadyOwned.map((a) => a.assetId));
+    const newIds = assets.map((a) => a.id).filter((id) => !ownedSet.has(id));
+
+    if (newIds.length > 0) {
+      await tx.childAsset.createMany({
+        data: newIds.map((id) => ({ childId: child.id, assetId: id })),
+        skipDuplicates: true,
+      });
+    }
+
+    return { unlockedCount: newIds.length, alreadyOwnedIds: Array.from(ownedSet) };
   });
 };
 

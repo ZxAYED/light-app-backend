@@ -8,6 +8,7 @@ export default {
   SendGridAPI:process.env.SENDGRID_API_KEY,
   SupabaseServiceKey:process.env.SUPABSE_SERVICE_KEY,
   SupabseProjectUrl:process.env.SUPABASE_PROJECT_URL,
+  DefaultAvatarId: process.env.DEFAULT_AVATAR_ID,
   jwt: {
     access_token_secret: process.env.ACCESS_TOKEN_SECRET,
     access_token_expires_in: process.env.ACCESS_TOKEN_EXPIRES_IN,

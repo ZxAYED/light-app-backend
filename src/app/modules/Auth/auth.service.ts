@@ -500,18 +500,24 @@ const createChild = async (payload: CreateChildInput & { image?: string, imagePa
       },
 
     });
-    const freeAvatar = await tx.avatar.findFirst({ orderBy: { createdAt: "asc" } });
-    if (freeAvatar) {
+    let avatarToAssign = null as any;
+    if (config.DefaultAvatarId) {
+      avatarToAssign = await tx.avatar.findUnique({ where: { id: config.DefaultAvatarId } });
+    }
+    if (!avatarToAssign) {
+      avatarToAssign = await tx.avatar.findFirst({ orderBy: { createdAt: "asc" } });
+    }
+    if (avatarToAssign) {
       await tx.childAvatar.create({
         data: {
           childId: child.id,
-          avatarId: freeAvatar.id,
+          avatarId: avatarToAssign.id,
           isActive: true,
         },
       });
       await tx.childProfile.update({
         where: { id: child.id },
-        data: { avatarId: freeAvatar.id },
+        data: { avatarId: avatarToAssign.id },
       });
     }
 

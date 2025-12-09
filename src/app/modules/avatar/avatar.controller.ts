@@ -136,7 +136,7 @@ const getAssetsByStyle: RequestHandler = catchAsync(async (req, res) => {
 const getAssetsByCategoryType: RequestHandler = catchAsync(async (req, res) => {
   const { type } = req.params;
   if (!type) throw new AppError(400, "category type missing");
-  const result = await AvatarService.getAssetsByCategoryType(type);
+  const result = await AvatarService.getAssetsByCategoryType(type, (req as any).user?.id);
   sendResponse(res, {
     statusCode: status.OK,
     success: true,
