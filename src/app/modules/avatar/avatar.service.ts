@@ -4,9 +4,9 @@ import { deleteImageFromSupabase } from "../../../utils/UploadFileToSupabase";
 
 import AppError from "../../Errors/AppError";
 import {
-    CreateAssetInput,
-    CreateAvatarInput,
-    CreateStyleInput,
+  CreateAssetInput,
+  CreateAvatarInput,
+  CreateStyleInput,
 } from "./avatar.validation";
 
 
@@ -99,13 +99,13 @@ const deleteAssetInternal = async (assetId: string) => {
   const asset = await prisma.asset.findUnique({ where: { id: assetId } });
   if (!asset) throw new AppError(404, "Asset not found");
 
- 
+
   if (asset.assetImgPath) {
     try {
       await deleteImageFromSupabase(asset.assetImgPath);
-    } catch (e:any) {
+    } catch (e: any) {
       console.error("Supabase asset delete failed:", e);
-     throw new AppError(400,e.message || e.data.message ||  "Asset image delete failed");
+      throw new AppError(400, e.message || e.data.message || "Asset image delete failed");
     }
   }
 
@@ -123,7 +123,7 @@ const deleteStyleInternal = async (styleId: string) => {
   const style = await prisma.assetStyle.findUnique({
     where: { id: styleId },
     include: {
-      colors: true, 
+      colors: true,
     },
   });
 
@@ -258,7 +258,7 @@ const getAvailableAvatarsForChild = async (
   }
 
   if (filters?.gender) {
-    whereCondition.gender = filters.gender as AvatarGender;
+    whereCondition.gender = filters.gender.toUpperCase() as AvatarGender;
   }
 
   if (filters?.region) {
@@ -271,6 +271,17 @@ const getAvailableAvatarsForChild = async (
   return prisma.avatar.findMany({
     where: whereCondition,
     orderBy: { createdAt: "desc" },
+    // include:{
+    //   categories: {
+    //     include: {
+    //       assetStyles: {
+    //         include: {
+    //           colors: true,
+    //         },
+    //       },
+    //     },
+    //   },
+    // }
   });
 };
 
@@ -287,7 +298,9 @@ const getOwnedAvatarsForChild = async (childUserId: string) => {
     orderBy: { createdAt: "desc" },
   });
 
-  return ownerships.map((o) => o.avatar);
+  const equipped = ownerships.find((o) => o.isActive)?.avatar || null;
+  const unequipped = ownerships.filter((o) => !o.isActive).map((o) => o.avatar);
+  return { equipped, unequipped };
 };
 
 const getAssetsByStyle = async (styleId: string) => {
@@ -304,6 +317,13 @@ const getAssetsByCategoryType = async (type: string) => {
   if (!raw) throw new AppError(400, "category type missing");
 
   const normalized = raw.toUpperCase().replace(/\s+|_/g, "");
+  if (normalized === "TRENDING") {
+    return prisma.asset.findMany({
+      include: { style: { include: { category: true } } },
+      orderBy: [{ purchased: "desc" }, { createdAt: "desc" }],
+      take: 10,
+    });
+  }
   const map: Record<string, AvatarCategoryType> = {
     SKIN: "SKIN",
     HAIR: "HAIR",
@@ -338,7 +358,11 @@ const getAssetsByCategoryType = async (type: string) => {
   });
 };
 
-const getCustomizationData = async (childUserId: string, avatarId: string) => {
+const getCustomizationData = async (
+  childUserId: string,
+  avatarId: string,
+ 
+) => {
   const child = await prisma.childProfile.findFirst({
     where: { userId: childUserId },
     select: { id: true },
@@ -371,26 +395,51 @@ const getCustomizationData = async (childUserId: string, avatarId: string) => {
 
   const unlockedAssetIds = new Set(unlockedAssets.map((a) => a.assetId));
 
+  // Fetch equipped assets
+  const equipped = await prisma.childAvatarEquipped.findMany({
+    where: { childAvatarId: owns.id },
+    select: { assetId: true },
+  });
+  const equippedAssetIds = new Set(equipped.map((e) => e.assetId));
+
+  // Initialize all possible keys to null to match Flutter structure expectation
   const result: Record<string, any> = {
     avatarImgUrl: avatar.avatarImgUrl,
+    gender: avatar.gender,
+    region: avatar.region,
+    hair: null,
+    dress: null,
+    jewelry: null,
+    shoes: null,
+    eyes: null,
+    nose: null,
+    skin: null,
+    accessory: null,
+    pet: null,
+
   };
 
   avatar.categories.forEach((category) => {
-    const key = category.type.toLowerCase(); 
-    const name = category.type.charAt(0) + category.type.slice(1).toLowerCase(); 
+    const key = category.type.toLowerCase();
+    const name = category.type.charAt(0) + category.type.slice(1).toLowerCase();
 
-    result[key] = {
-      name,
-      elements: category.assetStyles.map((style) => ({
-        styleName: style.styleName,
-        colors: style.colors.map((asset) => ({
+    const elements = category.assetStyles.map((style) => {
+      const colors = style.colors.map((asset) => {
+        const isUnlocked = unlockedAssetIds.has(asset.id) || asset.isStarter;
+      
+        return {
           id: asset.id,
           url: asset.assetImage,
-          isUnlocked: unlockedAssetIds.has(asset.id),
+          isUnlocked,
+       
+          isSelected: equippedAssetIds.has(asset.id),
           price: asset.price,
-        })),
-      })),
-    };
+        };
+      });
+      return { id: style.id, styleName: style.styleName, colors };
+    });
+
+    result[key] = elements.length > 0 ? { name, elements } : null;
   });
 
   return result;
@@ -429,10 +478,23 @@ const saveCustomization = async (
       throw new AppError(400, "One or more assets do not belong to this avatar");
     }
 
-    await tx.childAsset.createMany({
-      data: validAssets.map((a) => ({ childId: child.id, assetId: a.id })),
-      skipDuplicates: true,
+    const owned = await tx.childAsset.findMany({
+      where: { childId: child.id, assetId: { in: validAssets.map((a) => a.id) } },
+      select: { assetId: true },
     });
+    const ownedSet = new Set(owned.map((o) => o.assetId));
+    const missing = validAssets.map((a) => a.id).filter((id) => !ownedSet.has(id));
+    if (missing.length > 0) {
+      throw new AppError(400, `Locked assetIds: ${missing.join(",")}`);
+    }
+
+    await tx.childAvatarEquipped.deleteMany({ where: { childAvatarId: owns.id } });
+    await tx.childAvatarEquipped.createMany({
+      data: validAssets.map((a) => ({ childAvatarId: owns.id, assetId: a.id })),
+    });
+
+    await tx.childAvatar.updateMany({ where: { childId: child.id }, data: { isActive: false } });
+    await tx.childAvatar.update({ where: { id: owns.id }, data: { isActive: true } });
 
     const unlocked = await tx.childAsset.findMany({
       where: { childId: child.id },
@@ -443,6 +505,70 @@ const saveCustomization = async (
       savedCount: validAssets.length,
       unlockedAssetIds: unlocked.map((a) => a.assetId),
     };
+  });
+};
+
+const purchaseAvatar = async (childUserId: string, avatarId: string) => {
+  return prisma.$transaction(async (tx) => {
+    const child = await tx.childProfile.findFirst({ where: { userId: childUserId } });
+
+
+    if (!child) throw new AppError(404, "Child not found");
+    const avatar = await tx.avatar.findUnique({ where: { id: avatarId } });
+
+
+    if (!avatar) throw new AppError(404, "Avatar not found");
+    const owned = await tx.childAvatar.findFirst({ where: { childId: child.id, avatarId } });
+
+    if (owned) throw new AppError(400, "Avatar already owned");
+    const price = avatar.price || 0;
+
+
+    if ((child.coins || 0) < price) throw new AppError(400, "Insufficient coins");
+
+    
+    await tx.childProfile.update({ where: { id: child.id }, data: { coins: { decrement: price } } });
+
+
+    const ownership = await tx.childAvatar.create({ data: { childId: child.id, avatarId, isActive: false } });
+
+    
+    return { ownershipId: ownership.id };
+  });
+};
+
+const unlockAssetsForChild = async (childUserId: string, assetIds: string[]) => {
+  if (!Array.isArray(assetIds) || assetIds.length === 0) {
+    throw new AppError(400, "assetIds required");
+  }
+  return prisma.$transaction(async (tx) => {
+    const child = await tx.childProfile.findFirst({ where: { userId: childUserId } });
+    if (!child) throw new AppError(404, "Child not found");
+    const assets = await tx.asset.findMany({
+      where: { id: { in: assetIds } },
+      select: { id: true, style: { select: { category: { select: { avatarId: true } } } } },
+    });
+    if (assets.length !== assetIds.length) throw new AppError(404, "One or more assets not found");
+    const pairs = assets.map((a) => ({ assetId: a.id, avatarId: a.style?.category?.avatarId }));
+    const unlinked = pairs.filter((p) => !p.avatarId).map((p) => p.assetId);
+    if (unlinked.length > 0) {
+      throw new AppError(400, `Asset(s) not linked to an avatar: ${unlinked.join(",")}`);
+    }
+    const requiredAvatarIds = Array.from(new Set(pairs.map((p) => p.avatarId as string)));
+    if (requiredAvatarIds.length > 0) {
+      const owned = await tx.childAvatar.findMany({
+        where: { childId: child.id, avatarId: { in: requiredAvatarIds } },
+        select: { avatarId: true },
+      });
+      const ownedSet = new Set(owned.map((o) => o.avatarId));
+      const missingPairs = pairs.filter((p) => !ownedSet.has(p.avatarId as string));
+      if (missingPairs.length > 0) {
+        const detail = missingPairs.map((p) => `${p.avatarId} (asset:${p.assetId})`).join(",");
+        throw new AppError(400, `You Dont Own this Avatar(s): ${detail}`);
+      }
+    }
+    await tx.childAsset.createMany({ data: assets.map((a) => ({ childId: child.id, assetId: a.id })), skipDuplicates: true });
+    return { unlockedCount: assets.length };
   });
 };
 
@@ -470,7 +596,9 @@ export const AvatarService = {
   getAssetDetails,
   getCustomizationData,
   saveCustomization,
-  
+  purchaseAvatar,
+  unlockAssetsForChild,
+
   deleteAvatar,
   deleteCategory,
   deleteStyle,

@@ -37,3 +37,10 @@ export const createAssetSchema = z.object({
 });
 
 export type CreateAssetInput = z.infer<typeof createAssetSchema>;
+
+export const saveCustomizationSchema = z.object({
+  avatarId: z.string().min(1),
+  assetIds: z.array(z.string().min(1)).min(1),
+    
+});
+export type SaveCustomizationInput = z.infer<typeof saveCustomizationSchema>;

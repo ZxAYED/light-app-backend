@@ -500,6 +500,20 @@ const createChild = async (payload: CreateChildInput & { image?: string, imagePa
       },
 
     });
+    const freeAvatar = await tx.avatar.findFirst({ orderBy: { createdAt: "asc" } });
+    if (freeAvatar) {
+      await tx.childAvatar.create({
+        data: {
+          childId: child.id,
+          avatarId: freeAvatar.id,
+          isActive: true,
+        },
+      });
+      await tx.childProfile.update({
+        where: { id: child.id },
+        data: { avatarId: freeAvatar.id },
+      });
+    }
 
     return { ...user, ...child };
   });
@@ -509,7 +523,7 @@ const createChild = async (payload: CreateChildInput & { image?: string, imagePa
 };
 const updateChild = async (payload: Partial<CreateChildInput> & { image?: string, imagePath?: string, childId?: string }) => {
   const { childId, ...others } = payload
-  console.log("🚀 ~ updateChild ~ others:", others)
+  // console.log("🚀 ~ updateChild ~ others:", others)
   // const data = {
   //   name: others.name,
   //   gender: others.gender,

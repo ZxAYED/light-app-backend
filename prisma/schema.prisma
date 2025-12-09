@@ -30,6 +30,7 @@ model User {
   PushToken              PushToken[]
 
   @@index([role])
+  @@index([email])
 }
 
 model ParentProfile {
@@ -317,6 +318,7 @@ model Asset {
   style         AssetStyle     @relation(fields: [styleId], references: [id])
   unlocked      ChildAsset[]
   notifications Notification[]
+  equippedIn    ChildAvatarEquipped[]
 }
 
 model ChildAsset {
@@ -342,7 +344,20 @@ model ChildAvatar {
   child  ChildProfile @relation(fields: [childId], references: [id])
   avatar Avatar       @relation(fields: [avatarId], references: [id])
 
+  equippedAssets ChildAvatarEquipped[]
+
   @@unique([childId, avatarId])
+}
+
+model ChildAvatarEquipped {
+  id            String      @id @default(uuid())
+  childAvatarId String
+  assetId       String
+
+  childAvatar ChildAvatar @relation(fields: [childAvatarId], references: [id], onDelete: Cascade)
+  asset       Asset       @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@unique([childAvatarId, assetId])
 }
 
 model PushToken {

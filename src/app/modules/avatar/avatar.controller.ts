@@ -97,7 +97,7 @@ const createAsset: RequestHandler = catchAsync(async (req, res) => {
 const getAvailableAvatars: RequestHandler = catchAsync(async (req: any, res) => {
   const filters = {
     gender: req.query.gender as string,
-    region: req.query.region as string,
+    region: (req.query.region as string) || (req.query.origin as string),
   };
   
   const result = await AvatarService.getAvailableAvatarsForChild(req.user.id, filters);
@@ -132,8 +132,9 @@ const getAssetsByStyle: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+
 const getAssetsByCategoryType: RequestHandler = catchAsync(async (req, res) => {
-  const { type } = req.params 
+  const { type } = req.params;
   if (!type) throw new AppError(400, "category type missing");
   const result = await AvatarService.getAssetsByCategoryType(type);
   sendResponse(res, {
@@ -157,9 +158,9 @@ const getAssetDetails: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const getCustomizationData: RequestHandler = catchAsync(async (req: any, res) => {
- 
   const { avatarId } = req.params;
   if (!avatarId) throw new AppError(400, "avatarId missing");
+  
   const result = await AvatarService.getCustomizationData(req.user.id, avatarId);
   sendResponse(res, {
     statusCode: status.OK,
@@ -179,6 +180,29 @@ const saveCustomization: RequestHandler = catchAsync(async (req: any, res) => {
     statusCode: status.OK,
     success: true,
     message: "Customization saved successfully",
+    data: result,
+  });
+});
+
+const purchaseAvatar: RequestHandler = catchAsync(async (req: any, res) => {
+  const { avatarId } = req.params;
+  if (!avatarId) throw new AppError(400, "avatarId missing");
+  const result = await AvatarService.purchaseAvatar(req.user.id, avatarId);
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: "Avatar purchased successfully",
+    data: result,
+  });
+});
+
+const unlockAssets: RequestHandler = catchAsync(async (req: any, res) => {
+  const { assetIds } = req.body as { assetIds: string[] };
+  const result = await AvatarService.unlockAssetsForChild(req.user.id, assetIds || []);
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: "Assets unlocked successfully",
     data: result,
   });
 });
@@ -252,6 +276,8 @@ export const AvatarController = {
   getAssetDetails,
   getCustomizationData,
   saveCustomization,
+  purchaseAvatar,
+  unlockAssets,
   deleteAvatar,
   deleteCategory,
   deleteStyle,

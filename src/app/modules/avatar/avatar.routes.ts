@@ -8,7 +8,8 @@ import { AvatarController } from "./avatar.controller";
 import {
   createAssetSchema,
   createAvatarSchema,
-  createStyleSchema
+  createStyleSchema,
+  saveCustomizationSchema,
 } from "./avatar.validation";
 
 const router = express.Router();
@@ -56,6 +57,7 @@ router.get(
   AvatarController.getAssetsByStyle
 );
 
+
 router.get(
   "/assets/category/:type",
   RoleValidation(UserRole.CHILD),
@@ -75,9 +77,22 @@ router.get(
 );
 
 router.post(
-  "/customization/:avatarId",
+  "/customization/",
   RoleValidation(UserRole.CHILD),
+  validateJSON(saveCustomizationSchema),
   AvatarController.saveCustomization
+);
+
+router.post(
+  "/purchase/:avatarId",
+  RoleValidation(UserRole.CHILD),
+  AvatarController.purchaseAvatar
+);
+
+router.post(
+  "/unlock-asset",
+  RoleValidation(UserRole.CHILD),
+  AvatarController.unlockAssets
 );
 
 
