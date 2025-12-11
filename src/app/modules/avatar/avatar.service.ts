@@ -455,10 +455,15 @@ const buildCustomizationPayload = async (childId: string, avatarId: string) => {
       });
       return { id: style.id, styleName: style.styleName, colors };
     });
-    if (elements.length > 0) {
-      result[key] = { name, elements };
-    }
+    result[key] = elements.length > 0 ? { name, elements } : { name: "null", elements: null };
   });
+
+  const canonical = ["skin","hair","eyes","nose","dress","shoes","accessory","jewelry","pet"];
+  for (const k of canonical) {
+    if (!(k in result)) {
+      result[k] = { name: "null", elements: null };
+    }
+  }
 
   return result;
 };
@@ -594,15 +599,6 @@ const buildPresetSelectedPayload = async (childId: string, avatarId: string) => 
     avatarImgUrl: avatar.avatarImgUrl,
     gender: avatar.gender,
     region: avatar.region,
-    // hair: null,
-    // dress: null,
-    // jewelry: null,
-    // shoes: null,
-    // eyes: null,
-    // nose: null,
-    // skin: null,
-    // accessory: null,
-    // pet: null,
   };
 
   avatar.categories.forEach((category) => {
@@ -627,10 +623,15 @@ const buildPresetSelectedPayload = async (childId: string, avatarId: string) => 
       }
       if (payload) break;
     }
-    if (payload) {
-      result[key] = payload;
-    }
+    result[key] = payload ? payload : { name: "null", elements: null };
   });
+
+  const canonical = ["skin","hair","eyes","nose","dress","shoes","accessory","jewelry","pet"];
+  for (const k of canonical) {
+    if (!(k in result)) {
+      result[k] = { name: "null", elements: null };
+    }
+  }
 
   return result;
 };
