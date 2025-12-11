@@ -326,11 +326,11 @@ const getOwnedAvatarsForChild = async (childUserId: string) => {
   const unequippedAvatars = ownerships.filter((o) => !o.isActive).map((o) => o.avatar);
 
   const equippedPreset = activeOwnership
-    ? await buildPresetPayload(child.id, activeOwnership.avatarId)
+    ? await buildPresetIndexPayload(child.id, activeOwnership.avatarId)
     : null;
 
   const unequipped = await Promise.all(
-    unequippedAvatars.map((a) => buildPresetPayload(child.id, a.id))
+    unequippedAvatars.map((a) => buildPresetIndexPayload(child.id, a.id))
   );
 
   return { equipped: equippedPreset, unequipped };
@@ -524,6 +524,69 @@ const buildPresetPayload = async (childId: string, avatarId: string) => {
       },
     };
   }
+
+  return result;
+};
+
+const buildPresetIndexPayload = async (childId: string, avatarId: string) => {
+  const owns = await prisma.childAvatar.findFirst({ where: { childId, avatarId } });
+  if (!owns) throw new AppError(403, "Avatar not owned by child");
+
+  const avatar = await prisma.avatar.findUnique({
+    where: { id: avatarId },
+    include: {
+      categories: {
+        include: {
+          assetStyles: {
+            include: { colors: true },
+          },
+        },
+      },
+    },
+  });
+  if (!avatar) throw new AppError(404, "Avatar not found");
+
+  const equipped = await prisma.childAvatarEquipped.findMany({
+    where: { childAvatarId: owns.id },
+    select: { assetId: true },
+  });
+  const equippedSet = new Set(equipped.map((e) => e.assetId));
+
+  const result: Record<string, any> = {
+    avatarId: avatarId,
+    avatarImgUrl: avatar.avatarImgUrl,
+    gender: avatar.gender,
+    region: avatar.region,
+    hair: null,
+    dress: null,
+    jewelry: null,
+    shoes: null,
+    eyes: null,
+    nose: null,
+    skin: null,
+    accessory: null,
+    pet: null,
+  };
+
+  avatar.categories.forEach((category) => {
+    const key = category.type.toLowerCase();
+    const name = category.type.charAt(0) + category.type.slice(1).toLowerCase();
+    let elementsIndex = -1;
+    let colorsIndex = -1;
+    for (let si = 0; si < category.assetStyles.length; si++) {
+      const style = category.assetStyles[si];
+      for (let ci = 0; ci < style.colors.length; ci++) {
+        const asset = style.colors[ci];
+        if (equippedSet.has(asset.id)) {
+          elementsIndex = si;
+          colorsIndex = ci;
+          break;
+        }
+      }
+      if (elementsIndex !== -1) break;
+    }
+    result[key] = elementsIndex !== -1 ? { name, elementsIndex, colorsIndex } : null;
+  });
 
   return result;
 };
