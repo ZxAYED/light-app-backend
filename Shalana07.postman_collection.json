@@ -412,6 +412,46 @@
 					"response": []
 				},
 				{
+					"name": "delete parent",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{parentToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "data",
+									"value": "{\n  \"name\": \"John Doe\",\n  \"phone\": \"+8801789456123\",\n  \"dateOfBirth\": \"1985-06-15T00:00:00.000Z\",\n  \"location\": \"Dhaka, Bangladesh\",\n  \"pushNotification\": true,\n  \"dailyReminders\": false,\n  \"childTaskUpdates\": true\n}\n",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/C:/Users/zzaye/Downloads/reactBits.png"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base-url}}/auth/update-parent/e0ed33df-0825-4544-9803-d06fbbbd129f",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"auth",
+								"update-parent",
+								"e0ed33df-0825-4544-9803-d06fbbbd129f"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Refresh Token",
 					"request": {
 						"method": "GET",
@@ -818,6 +858,792 @@
 								}
 							},
 							"response": []
+						}
+					]
+				},
+				{
+					"name": "get all avatars",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base-url}}/avatar/available?origin=Europe&gender=FEMALE",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"avatar",
+								"available"
+							],
+							"query": [
+								{
+									"key": "origin",
+									"value": "Europe"
+								},
+								{
+									"key": "gender",
+									"value": "FEMALE"
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "get all avatars",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{childToken}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base-url}}/avatar/available?origin=Europe&gender=FEMALE",
+									"host": [
+										"{{base-url}}"
+									],
+									"path": [
+										"avatar",
+										"available"
+									],
+									"query": [
+										{
+											"key": "origin",
+											"value": "Europe"
+										},
+										{
+											"key": "gender",
+											"value": "FEMALE"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "796"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"31c-uyVdYIRzxj/HM17jwd0oQRvXWF0\""
+								},
+								{
+									"key": "Date",
+									"value": "Mon, 08 Dec 2025 07:00:20 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Avatars fetched successfully\",\n    \"data\": [\n        {\n            \"id\": \"00843abd-db82-4ce7-bd36-83f8341f1c18\",\n            \"avatarImgUrl\": \"https://phyrhqumhkdgjjgwmwhd.supabase.co/storage/v1/object/public/shalana07/avatar-1764826450963.png\",\n            \"avatarImgPath\": \"avatar-1764826450963.png\",\n            \"gender\": \"FEMALE\",\n            \"region\": \"Europe\",\n            \"description\": \"Cute avatar with classy vibe & smartness\",\n            \"purchased\": 0,\n            \"price\": 550,\n            \"createdAt\": \"2025-12-04T05:34:12.121Z\"\n        },\n        {\n            \"id\": \"e2a67cec-c4c3-4ca6-8e69-5f36c5a45e9a\",\n            \"avatarImgUrl\": \"https://phyrhqumhkdgjjgwmwhd.supabase.co/storage/v1/object/public/shalana07/avatar-1764762539397.png\",\n            \"avatarImgPath\": \"avatar-1764762539397.png\",\n            \"gender\": \"FEMALE\",\n            \"region\": \"Europe\",\n            \"description\": \"Cute avatar with classy vibe & smartness\",\n            \"purchased\": 0,\n            \"price\": 550,\n            \"createdAt\": \"2025-12-03T11:49:00.706Z\"\n        }\n    ]\n}"
+						},
+						{
+							"name": "get all avatars",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{childToken}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base-url}}/avatar/available",
+									"host": [
+										"{{base-url}}"
+									],
+									"path": [
+										"avatar",
+										"available"
+									],
+									"query": [
+										{
+											"key": "origin",
+											"value": "Europe",
+											"disabled": true
+										},
+										{
+											"key": "gender",
+											"value": "FEMALE",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "11028"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"2b14-dn24U93J8iKNyCV85zxCOjuQMZ4\""
+								},
+								{
+									"key": "Date",
+									"value": "Mon, 08 Dec 2025 10:46:07 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Avatars fetched successfully\",\n    \"data\": [\n        {\n            \"id\": \"b0177b7e-55e1-4808-8c44-0358f199513a\",\n            \"avatarImgUrl\": \"https://phyrhqumhkdgjjgwmwhd.supabase.co/storage/v1/object/public/shalana07/avatar-1764826450963.png\",\n            \"avatarImgPath\": null,\n            \"gender\": \"FEMALE\",\n            \"region\": \"International\",\n            \"description\": \"Demo Avatar for Customization\",\n            \"purchased\": 0,\n            \"price\": 0,\n            \"createdAt\": \"2025-12-06T05:25:13.319Z\",\n            \"categories\": [\n                {\n                    \"id\": \"e2c41502-3f2a-49ca-8a43-02cf52bdc6e4\",\n                    \"avatarId\": \"b0177b7e-55e1-4808-8c44-0358f199513a\",\n                    \"type\": \"HAIR\",\n                    \"assetStyles\": [\n                        {\n                            \"id\": \"7be6f6f0-bce7-4775-8196-b96e42ac3b5d\",\n                            \"categoryId\": \"e2c41502-3f2a-49ca-8a43-02cf52bdc6e4\",\n                            \"styleName\": \"Long\",\n                            \"description\": null,\n                            \"createdAt\": \"2025-12-06T05:25:13.560Z\",\n                            \"colors\": [\n                                {\n                                    \"id\": \"906248d1-47df-49dc-b0ea-b74763738293\",\n                                    \"styleId\": \"7be6f6f0-bce7-4775-8196-b96e42ac3b5d\",\n                                    \"assetImage\": \"https://example.com/assets/hair/long/1.png\",\n                                    \"assetImgPath\": null,\n                                    \"colorName\": \"Color 1\",\n                                    \"description\": null,\n                                    \"gender\": null,\n                                    \"price\": 0,\n                                    \"rarity\": \"COMMON\",\n                                    \"isStarter\": true,\n                                    \"purchased\": 0,\n                                    \"createdAt\": \"2025-12-06T05:25:13.670Z\"\n                                },\n                                {\n                                    \"id\": \"f3703b93-efde-4df0-bcf2-cc3c8cde9a89\",\n                                    \"styleId\": \"7be6f6f0-bce7-4775-8196-b96e42ac3b5d\",\n                                    \"assetImage\": \"https://example.com/assets/hair/long/2.png\",\n                                    \"assetImgPath\": null,\n                                    \"colorName\": \"Color 2\",\n                                    \"description\": null,\n                                    \"gender\": null,\n                                    \"price\": 50,\n                                    \"rarity\": \"COMMON\",\n                                    \"isStarter\": false,\n                                    \"purchased\": 0,\n                                    \"createdAt\": \"2025-12-06T05:25:13.778Z\"\n                                },\n                                {\n                                    \"id\": \"310b816b-0b3a-48f1-825d-8454cf9db7de\",\n                                    \"styleId\": \"7be6f6f0-bce7-4775-8196-b96e42ac3b5d\",\n                                    \"assetImage\": \"https://example.com/assets/hair/long/3.png\",\n                                    \"assetImgPath\": null,\n                                    \"colorName\": \"Color 3\",\n                                    \"description\": null,\n                                    \"gender\": null,\n                                    \"price\": 50,\n                                    \"rarity\": \"COMMON\",\n                                    \"isStarter\": false,\n                                    \"purchased\": 0,\n                                    \"createdAt\": \"2025-12-06T05:25:13.831Z\"\n                                }\n                            ]\n                        },\n                        {\n                            \"id\": \"5f4663ab-f712-46bc-9482-eb96e381c178\",\n                            \"categoryId\": \"e2c41502-3f2a-49ca-8a43-02cf52bdc6e4\",\n                            \"styleName\": \"Curly\",\n                            \"description\": null,\n                            \"createdAt\": \"2025-12-06T05:25:13.884Z\",\n                            \"colors\": [\n                                {\n                                    \"id\": \"628e67cb-5bf3-456b-9c96-1fed046a397c\",\n                                    \"styleId\": \"5f4663ab-f712-46bc-9482-eb96e381c178\",\n                                    \"assetImage\": \"https://example.com/assets/hair/curly/1.png\",\n                                    \"assetImgPath\": null,\n                                    \"colorName\": \"Color 1\",\n                                    \"description\": null,\n                                    \"gender\": null,\n                                    \"price\": 0,\n                                    \"rarity\": \"COMMON\",\n                                    \"isStarter\": true,\n                                    \"purchased\": 0,\n                                    \"createdAt\": \"2025-12-06T05:25:13.936Z\"\n                                },\n                                {\n                                    \"id\": \"b9dc93f4-7b15-4da1-9fc7-771a46dc72a2\",\n                                    \"styleId\": \"5f4663ab-f712-46bc-9482-eb96e381c178\",\n                                    \"assetImage\": \"https://example.com/assets/hair/curly/2.png\",\n                                    \"assetImgPath\": null,\n                                    \"colorName\": \"Color 2\",\n                                    \"description\": null,\n                                    \"gender\": null,\n                                    \"price\": 50,\n                                    \"rarity\": \"COMMON\",\n                                    \"isStarter\": false,\n                                    \"purchased\": 0,\n                                    \"createdAt\": \"2025-12-06T05:25:13.989Z\"\n                                },\n                                {\n                                    \"id\": \"f65a99e2-be07-4b4a-b97c-4545c16be6dd\",\n                                    \"styleId\": \"5f4663ab-f712-46bc-9482-eb96e381c178\",\n                                    \"assetImage\": \"https://example.com/assets/hair/curly/3.png\",\n                                    \"assetImgPath\": null,\n                                    \"colorName\": \"Color 3\",\n                                    \"description\": null,\n                                    \"gender\": null,\n                                    \"price\": 50,\n                                    \"rarity\": \"COMMON\",\n                                    \"isStarter\": false,\n                                    \"purchased\": 0,\n                                    \"createdAt\": \"2025-12-06T05:25:14.042Z\"\n                                }\n                            ]\n                        },\n                        {\n                            \"id\": \"74cc5c8d-cffb-425a-a6af-97e9ac69d482\",\n                            \"categoryId\": \"e2c41502-3f2a-49ca-8a43-02cf52bdc6e4\",\n                            \"styleName\": \"Normal\",\n                            \"description\": null,\n                            \"createdAt\": \"2025-12-06T05:25:14.095Z\",\n                            \"colors\": [\n                                {\n                                    \"id\": \"2116729f-4adb-4ae4-9d8f-3646b9990ecc\",\n                                    \"styleId\": \"74cc5c8d-cffb-425a-a6af-97e9ac69d482\",\n                                    \"assetImage\": \"https://example.com/assets/hair/normal/1.png\",\n                                    \"assetImgPath\": null,\n                                    \"colorName\": \"Color 1\",\n                                    \"description\": null,\n                                    \"gender\": null,\n                                    \"price\": 0,\n                                    \"rarity\": \"COMMON\",\n                                    \"isStarter\": true,\n                                    \"purchased\": 0,\n                                    \"createdAt\": \"2025-12-06T05:25:14.158Z\"\n                                },\n                                {\n                                    \"id\": \"ef6557cd-ecf9-49a1-a86a-c5c652434ead\",\n                                    \"styleId\": \"74cc5c8d-cffb-425a-a6af-97e9ac69d482\",\n                                    \"assetImage\": \"https://example.com/assets/hair/normal/2.png\",\n                                    \"assetImgPath\": null,\n                                    \"colorName\": \"Color 2\",\n                                    \"description\": null,\n                                    \"gender\": null,\n                                    \"price\": 50,\n                                    \"rarity\": \"COMMON\",\n                                    \"isStarter\": false,\n                                    \"purchased\": 0,\n                                    \"createdAt\": \"2025-12-06T05:25:14.211Z\"\n                                },\n                                {\n                                    \"id\": \"53cc0fc3-2acd-4cda-86d4-c865b3ea60e7\",\n                                    \"styleId\": \"74cc5c8d-cffb-425a-a6af-97e9ac69d482\",\n                                    \"assetImage\": \"https://example.com/assets/hair/normal/3.png\",\n                                    \"assetImgPath\": null,\n                                    \"colorName\": \"Color 3\",\n                                    \"description\": null,\n                                    \"gender\": null,\n                                    \"price\": 50,\n                                    \"rarity\": \"COMMON\",\n                                    \"isStarter\": false,\n                                    \"purchased\": 0,\n                                    \"createdAt\": \"2025-12-06T05:25:14.263Z\"\n                                }\n                            ]\n                        }\n                    ]\n                },\n                {\n                    \"id\": \"e6d0af95-d7b5-4316-81ad-f71c84f14507\",\n                    \"avatarId\": \"b0177b7e-55e1-4808-8c44-0358f199513a\",\n                    \"type\": \"DRESS\",\n                    \"assetStyles\": [\n                        {\n                            \"id\": \"e073e2fe-a5ce-40a9-b002-7de7db182bfa\",\n                            \"categoryId\": \"e6d0af95-d7b5-4316-81ad-f71c84f14507\",\n                            \"styleName\": \"Neckless\",\n                            \"description\": null,\n                            \"createdAt\": \"2025-12-06T05:25:14.368Z\",\n                            \"colors\": [\n                                {\n                                    \"id\": \"aaa0f49a-d410-4ff3-a847-37e58d0c23b1\",\n                                    \"styleId\": \"e073e2fe-a5ce-40a9-b002-7de7db182bfa\",\n                                    \"assetImage\": \"https://example.com/assets/dress/neckless/1.png\",\n                                    \"assetImgPath\": null,\n                                    \"colorName\": \"Color 1\",\n                                    \"description\": null,\n                                    \"gender\": null,\n                                    \"price\": 0,\n                                    \"rarity\": \"COMMON\",\n                                    \"isStarter\": true,\n                                    \"purchased\": 0,\n                                    \"createdAt\": \"2025-12-06T05:25:14.419Z\"\n                                },\n                                {\n                                    \"id\": \"eb4f612e-b68e-4cf0-8aaf-7979dae9de8a\",\n                                    \"styleId\": \"e073e2fe-a5ce-40a9-b002-7de7db182bfa\",\n                                    \"assetImage\": \"https://example.com/assets/dress/neckless/2.png\",\n                                    \"assetImgPath\": null,\n                                    \"colorName\": \"Color 2\",\n                                    \"description\": null,\n                                    \"gender\": null,\n                                    \"price\": 50,\n                                    \"rarity\": \"COMMON\",\n                                    \"isStarter\": false,\n                                    \"purchased\": 0,\n                                    \"createdAt\": \"2025-12-06T05:25:14.471Z\"\n                                },\n                                {\n                                    \"id\": \"d96e6b31-e193-47b5-a981-9780e3b63153\",\n                                    \"styleId\": \"e073e2fe-a5ce-40a9-b002-7de7db182bfa\",\n                                    \"assetImage\": \"https://example.com/assets/dress/neckless/3.png\",\n                                    \"assetImgPath\": null,\n                                    \"colorName\": \"Color 3\",\n                                    \"description\": null,\n                                    \"gender\": null,\n                                    \"price\": 50,\n                                    \"rarity\": \"COMMON\",\n                                    \"isStarter\": false,\n                                    \"purchased\": 0,\n                                    \"createdAt\": \"2025-12-06T05:25:14.524Z\"\n                                }\n                            ]\n                        },\n                        {\n                            \"id\": \"a3fbe437-3eb9-4f31-9a23-6bde4205110d\",\n                            \"categoryId\": \"e6d0af95-d7b5-4316-81ad-f71c84f14507\",\n                            \"styleName\": \"Basic\",\n                            \"description\": null,\n                            \"createdAt\": \"2025-12-06T05:25:14.576Z\",\n                            \"colors\": [\n                                {\n                                    \"id\": \"cf162608-90a4-4672-a3c4-a0f927c6d839\",\n                                    \"styleId\": \"a3fbe437-3eb9-4f31-9a23-6bde4205110d\",\n                                    \"assetImage\": \"https://example.com/assets/dress/basic/1.png\",\n                                    \"assetImgPath\": null,\n                                    \"colorName\": \"Color 1\",\n                                    \"description\": null,\n                                    \"gender\": null,\n                                    \"price\": 0,\n                                    \"rarity\": \"COMMON\",\n                                    \"isStarter\": true,\n                                    \"purchased\": 0,\n                                    \"createdAt\": \"2025-12-06T05:25:14.628Z\"\n                                },\n                                {\n                                    \"id\": \"e39ea197-c8a8-4501-813e-c9a236a39981\",\n                                    \"styleId\": \"a3fbe437-3eb9-4f31-9a23-6bde4205110d\",\n                                    \"assetImage\": \"https://example.com/assets/dress/basic/2.png\",\n                                    \"assetImgPath\": null,\n                                    \"colorName\": \"Color 2\",\n                                    \"description\": null,\n                                    \"gender\": null,\n                                    \"price\": 50,\n                                    \"rarity\": \"COMMON\",\n                                    \"isStarter\": false,\n                                    \"purchased\": 0,\n                                    \"createdAt\": \"2025-12-06T05:25:14.681Z\"\n                                },\n                                {\n                                    \"id\": \"f6c54f3b-9b5b-4510-9a22-5c019a8d451e\",\n                                    \"styleId\": \"a3fbe437-3eb9-4f31-9a23-6bde4205110d\",\n                                    \"assetImage\": \"https://example.com/assets/dress/basic/3.png\",\n                                    \"assetImgPath\": null,\n                                    \"colorName\": \"Color 3\",\n                                    \"description\": null,\n                                    \"gender\": null,\n                                    \"price\": 50,\n                                    \"rarity\": \"COMMON\",\n                                    \"isStarter\": false,\n                                    \"purchased\": 0,\n                                    \"createdAt\": \"2025-12-06T05:25:14.733Z\"\n                                }\n                            ]\n                        },\n                        {\n                            \"id\": \"3c6c6680-f6a8-4614-a923-d8fe85d6fcbf\",\n                            \"categoryId\": \"e6d0af95-d7b5-4316-81ad-f71c84f14507\",\n                            \"styleName\": \"Tops\",\n                            \"description\": null,\n                            \"createdAt\": \"2025-12-06T05:25:14.786Z\",\n                            \"colors\": [\n                                {\n                                    \"id\": \"1a01cf3b-c1e1-487f-8e40-9788f2329afd\",\n                                    \"styleId\": \"3c6c6680-f6a8-4614-a923-d8fe85d6fcbf\",\n                                    \"assetImage\": \"https://example.com/assets/dress/tops/1.png\",\n                                    \"assetImgPath\": null,\n                                    \"colorName\": \"Color 1\",\n                                    \"description\": null,\n                                    \"gender\": null,\n                                    \"price\": 0,\n                                    \"rarity\": \"COMMON\",\n                                    \"isStarter\": true,\n                                    \"purchased\": 0,\n                                    \"createdAt\": \"2025-12-06T05:25:14.843Z\"\n                                },\n                                {\n                                    \"id\": \"ec100580-2b46-463f-8ec9-a5dac93ecb96\",\n                                    \"styleId\": \"3c6c6680-f6a8-4614-a923-d8fe85d6fcbf\",\n                                    \"assetImage\": \"https://example.com/assets/dress/tops/2.png\",\n                                    \"assetImgPath\": null,\n                                    \"colorName\": \"Color 2\",\n                                    \"description\": null,\n                                    \"gender\": null,\n                                    \"price\": 50,\n                                    \"rarity\": \"COMMON\",\n                                    \"isStarter\": false,\n                                    \"purchased\": 0,\n                                    \"createdAt\": \"2025-12-06T05:25:14.895Z\"\n                                },\n                                {\n                                    \"id\": \"a877ae65-39dd-4099-bde6-4e226ca74876\",\n                                    \"styleId\": \"3c6c6680-f6a8-4614-a923-d8fe85d6fcbf\",\n                                    \"assetImage\": \"https://example.com/assets/dress/tops/3.png\",\n                                    \"assetImgPath\": null,\n                                    \"colorName\": \"Color 3\",\n                                    \"description\": null,\n                                    \"gender\": null,\n                                    \"price\": 50,\n                                    \"rarity\": \"COMMON\",\n                                    \"isStarter\": false,\n                                    \"purchased\": 0,\n                                    \"createdAt\": \"2025-12-06T05:25:14.947Z\"\n                                }\n                            ]\n                        }\n                    ]\n                },\n                {\n                    \"id\": \"abaa339a-9001-404d-9dc6-519f97974380\",\n                    \"avatarId\": \"b0177b7e-55e1-4808-8c44-0358f199513a\",\n                    \"type\": \"JEWELRY\",\n                    \"assetStyles\": [\n                        {\n                            \"id\": \"f847e6fb-a3a5-40b2-acac-7aa8595036e3\",\n                            \"categoryId\": \"abaa339a-9001-404d-9dc6-519f97974380\",\n                            \"styleName\": \"Style 1\",\n                            \"description\": null,\n                            \"createdAt\": \"2025-12-06T05:25:15.053Z\",\n                            \"colors\": [\n                                {\n                                    \"id\": \"805502c8-ed62-41f2-8b93-fb867760f4d5\",\n                                    \"styleId\": \"f847e6fb-a3a5-40b2-acac-7aa8595036e3\",\n                                    \"assetImage\": \"https://example.com/assets/jewelry/style 1/1.png\",\n                                    \"assetImgPath\": null,\n                                    \"colorName\": \"Color 1\",\n                                    \"description\": null,\n                                    \"gender\": null,\n                                    \"price\": 0,\n                                    \"rarity\": \"COMMON\",\n                                    \"isStarter\": true,\n                                    \"purchased\": 0,\n                                    \"createdAt\": \"2025-12-06T05:25:15.105Z\"\n                                },\n                                {\n                                    \"id\": \"fd4a06e5-c2f4-4c7a-aa42-3994abad7648\",\n                                    \"styleId\": \"f847e6fb-a3a5-40b2-acac-7aa8595036e3\",\n                                    \"assetImage\": \"https://example.com/assets/jewelry/style 1/2.png\",\n                                    \"assetImgPath\": null,\n                                    \"colorName\": \"Color 2\",\n                                    \"description\": null,\n                                    \"gender\": null,\n                                    \"price\": 50,\n                                    \"rarity\": \"COMMON\",\n                                    \"isStarter\": false,\n                                    \"purchased\": 0,\n                                    \"createdAt\": \"2025-12-06T05:25:15.158Z\"\n                                },\n                                {\n                                    \"id\": \"177e84e0-3142-462e-8c06-09d3e7b0a090\",\n                                    \"styleId\": \"f847e6fb-a3a5-40b2-acac-7aa8595036e3\",\n                                    \"assetImage\": \"https://example.com/assets/jewelry/style 1/3.png\",\n                                    \"assetImgPath\": null,\n                                    \"colorName\": \"Color 3\",\n                                    \"description\": null,\n                                    \"gender\": null,\n                                    \"price\": 50,\n                                    \"rarity\": \"COMMON\",\n                                    \"isStarter\": false,\n                                    \"purchased\": 0,\n                                    \"createdAt\": \"2025-12-06T05:25:15.210Z\"\n                                }\n                            ]\n                        }\n                    ]\n                }\n            ]\n        },\n        {\n            \"id\": \"e2a67cec-c4c3-4ca6-8e69-5f36c5a45e9a\",\n            \"avatarImgUrl\": \"https://phyrhqumhkdgjjgwmwhd.supabase.co/storage/v1/object/public/shalana07/avatar-1764762539397.png\",\n            \"avatarImgPath\": \"avatar-1764762539397.png\",\n            \"gender\": \"FEMALE\",\n            \"region\": \"Europe\",\n            \"description\": \"Cute avatar with classy vibe & smartness\",\n            \"purchased\": 0,\n            \"price\": 550,\n            \"createdAt\": \"2025-12-03T11:49:00.706Z\",\n            \"categories\": [\n                {\n                    \"id\": \"d75dd2cd-2c96-4c4f-8f90-1fe785bc1aa8\",\n                    \"avatarId\": \"e2a67cec-c4c3-4ca6-8e69-5f36c5a45e9a\",\n                    \"type\": \"HAIR\",\n                    \"assetStyles\": [\n                        {\n                            \"id\": \"c746485a-dce4-4e09-882d-e9703dde3a79\",\n                            \"categoryId\": \"d75dd2cd-2c96-4c4f-8f90-1fe785bc1aa8\",\n                            \"styleName\": \"Silky\",\n                            \"description\": \"Silky hairstyle with smooth texture\",\n                            \"createdAt\": \"2025-12-04T03:15:50.482Z\",\n                            \"colors\": [\n                                {\n                                    \"id\": \"b01837aa-fd6b-405c-9591-f7791ec8a61d\",\n                                    \"styleId\": \"c746485a-dce4-4e09-882d-e9703dde3a79\",\n                                    \"assetImage\": \"https://phyrhqumhkdgjjgwmwhd.supabase.co/storage/v1/object/public/shalana07/asset-1764843408010.png\",\n                                    \"assetImgPath\": \"asset-1764843408010.png\",\n                                    \"colorName\": \"Brown\",\n                                    \"description\": null,\n                                    \"gender\": \"UNISEX\",\n                                    \"price\": 200,\n                                    \"rarity\": \"COMMON\",\n                                    \"isStarter\": false,\n                                    \"purchased\": 0,\n                                    \"createdAt\": \"2025-12-04T10:16:49.222Z\"\n                                }\n                            ]\n                        }\n                    ]\n                },\n                {\n                    \"id\": \"877272e1-1566-479e-8250-247a49ddfc99\",\n                    \"avatarId\": \"e2a67cec-c4c3-4ca6-8e69-5f36c5a45e9a\",\n                    \"type\": \"SKIN\",\n                    \"assetStyles\": []\n                },\n                {\n                    \"id\": \"488f03ba-4fbf-4233-907c-c6decb582c6c\",\n                    \"avatarId\": \"e2a67cec-c4c3-4ca6-8e69-5f36c5a45e9a\",\n                    \"type\": \"EYES\",\n                    \"assetStyles\": [\n                        {\n                            \"id\": \"05b16197-92d7-49f5-995f-779c12ca46e0\",\n                            \"categoryId\": \"488f03ba-4fbf-4233-907c-c6decb582c6c\",\n                            \"styleName\": \"BLUE\",\n                            \"description\": \"Cute eyes \",\n                            \"createdAt\": \"2025-12-08T10:32:08.222Z\",\n                            \"colors\": [\n                                {\n                                    \"id\": \"fabbbeea-4157-4694-8d48-76d3d38af726\",\n                                    \"styleId\": \"05b16197-92d7-49f5-995f-779c12ca46e0\",\n                                    \"assetImage\": \"https://phyrhqumhkdgjjgwmwhd.supabase.co/storage/v1/object/public/shalana07/asset-1765189969128.png\",\n                                    \"assetImgPath\": \"asset-1765189969128.png\",\n                                    \"colorName\": \"blue\",\n                                    \"description\": null,\n                                    \"gender\": \"UNISEX\",\n                                    \"price\": 200,\n                                    \"rarity\": \"COMMON\",\n                                    \"isStarter\": false,\n                                    \"purchased\": 0,\n                                    \"createdAt\": \"2025-12-08T10:32:50.459Z\"\n                                }\n                            ]\n                        }\n                    ]\n                }\n            ]\n        }\n    ]\n}"
+						}
+					]
+				},
+				{
+					"name": "get asset by style id",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base-url}}/avatar/assets/style/c746485a-dce4-4e09-882d-e9703dde3a79",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"avatar",
+								"assets",
+								"style",
+								"c746485a-dce4-4e09-882d-e9703dde3a79"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get owned avatars of child",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base-url}}/avatar/owned",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"avatar",
+								"owned"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get assets by category type",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base-url}}/avatar/assets/category/trending",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"avatar",
+								"assets",
+								"category",
+								"trending"
+							],
+							"query": [
+								{
+									"key": "",
+									"value": null,
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "get assets by category type",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{childToken}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base-url}}/avatar/assets/category/HAIR",
+									"host": [
+										"{{base-url}}"
+									],
+									"path": [
+										"avatar",
+										"assets",
+										"category",
+										"HAIR"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "824"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"338-OMkxS50t3ROuhC5WUprwSVMOweI\""
+								},
+								{
+									"key": "Date",
+									"value": "Fri, 05 Dec 2025 08:41:25 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Assets by category fetched successfully\",\n    \"data\": [\n        {\n            \"id\": \"b01837aa-fd6b-405c-9591-f7791ec8a61d\",\n            \"styleId\": \"c746485a-dce4-4e09-882d-e9703dde3a79\",\n            \"assetImage\": \"https://phyrhqumhkdgjjgwmwhd.supabase.co/storage/v1/object/public/shalana07/asset-1764843408010.png\",\n            \"assetImgPath\": \"asset-1764843408010.png\",\n            \"colorName\": \"Brown\",\n            \"description\": null,\n            \"gender\": \"UNISEX\",\n            \"price\": 200,\n            \"rarity\": \"COMMON\",\n            \"isStarter\": false,\n            \"purchased\": 0,\n            \"createdAt\": \"2025-12-04T10:16:49.222Z\",\n            \"style\": {\n                \"id\": \"c746485a-dce4-4e09-882d-e9703dde3a79\",\n                \"categoryId\": \"d75dd2cd-2c96-4c4f-8f90-1fe785bc1aa8\",\n                \"styleName\": \"Silky\",\n                \"description\": \"Silky hairstyle with smooth texture\",\n                \"createdAt\": \"2025-12-04T03:15:50.482Z\",\n                \"category\": {\n                    \"id\": \"d75dd2cd-2c96-4c4f-8f90-1fe785bc1aa8\",\n                    \"avatarId\": \"e2a67cec-c4c3-4ca6-8e69-5f36c5a45e9a\",\n                    \"type\": \"HAIR\"\n                }\n            }\n        }\n    ]\n}"
+						}
+					]
+				},
+				{
+					"name": "get single asseet details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base-url}}/avatar/asset/fabbbeea-4157-4694-8d48-76d3d38af726",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"avatar",
+								"asset",
+								"fabbbeea-4157-4694-8d48-76d3d38af726"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "get single asseet details",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{childToken}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base-url}}/avatar/asset/fabbbeea-4157-4694-8d48-76d3d38af726",
+									"host": [
+										"{{base-url}}"
+									],
+									"path": [
+										"avatar",
+										"asset",
+										"fabbbeea-4157-4694-8d48-76d3d38af726"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "790"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"316-7uKivlmkDJgP6og3NJaT4WwGIuE\""
+								},
+								{
+									"key": "Date",
+									"value": "Mon, 08 Dec 2025 10:34:01 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Asset details fetched successfully\",\n    \"data\": {\n        \"id\": \"fabbbeea-4157-4694-8d48-76d3d38af726\",\n        \"styleId\": \"05b16197-92d7-49f5-995f-779c12ca46e0\",\n        \"assetImage\": \"https://phyrhqumhkdgjjgwmwhd.supabase.co/storage/v1/object/public/shalana07/asset-1765189969128.png\",\n        \"assetImgPath\": \"asset-1765189969128.png\",\n        \"colorName\": \"blue\",\n        \"description\": null,\n        \"gender\": \"UNISEX\",\n        \"price\": 200,\n        \"rarity\": \"COMMON\",\n        \"isStarter\": false,\n        \"purchased\": 0,\n        \"createdAt\": \"2025-12-08T10:32:50.459Z\",\n        \"style\": {\n            \"id\": \"05b16197-92d7-49f5-995f-779c12ca46e0\",\n            \"categoryId\": \"488f03ba-4fbf-4233-907c-c6decb582c6c\",\n            \"styleName\": \"BLUE\",\n            \"description\": \"Cute eyes \",\n            \"createdAt\": \"2025-12-08T10:32:08.222Z\",\n            \"category\": {\n                \"id\": \"488f03ba-4fbf-4233-907c-c6decb582c6c\",\n                \"avatarId\": \"e2a67cec-c4c3-4ca6-8e69-5f36c5a45e9a\",\n                \"type\": \"EYES\"\n            }\n        }\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "get avatar customization",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base-url}}/avatar/customization/00843abd-db82-4ce7-bd36-83f8341f1c18",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"avatar",
+								"customization",
+								"00843abd-db82-4ce7-bd36-83f8341f1c18"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "get avatar customization",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{childToken}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base-url}}/avatar/customization/b0177b7e-55e1-4808-8c44-0358f199513a",
+									"host": [
+										"{{base-url}}"
+									],
+									"path": [
+										"avatar",
+										"customization",
+										"b0177b7e-55e1-4808-8c44-0358f199513a"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "4080"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"ff0-aoPnB2bx+xrN3kNArKpzLHLq3Gw\""
+								},
+								{
+									"key": "Date",
+									"value": "Mon, 08 Dec 2025 10:50:27 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Customization data fetched successfully\",\n    \"data\": {\n        \"avatarImgUrl\": \"https://phyrhqumhkdgjjgwmwhd.supabase.co/storage/v1/object/public/shalana07/avatar-1764826450963.png\",\n        \"gender\": \"FEMALE\",\n        \"region\": \"International\",\n        \"hair\": {\n            \"name\": \"Hair\",\n            \"elements\": [\n                {\n                    \"id\": \"7be6f6f0-bce7-4775-8196-b96e42ac3b5d\",\n                    \"styleName\": \"Long\",\n                    \"colors\": [\n                        {\n                            \"id\": \"906248d1-47df-49dc-b0ea-b74763738293\",\n                            \"url\": \"https://example.com/assets/hair/long/1.png\",\n                            \"isUnlocked\": true,\n                            \"isSelected\": false,\n                            \"price\": 0\n                        },\n                        {\n                            \"id\": \"f3703b93-efde-4df0-bcf2-cc3c8cde9a89\",\n                            \"url\": \"https://example.com/assets/hair/long/2.png\",\n                            \"isUnlocked\": false,\n                            \"isSelected\": false,\n                            \"price\": 50\n                        },\n                        {\n                            \"id\": \"310b816b-0b3a-48f1-825d-8454cf9db7de\",\n                            \"url\": \"https://example.com/assets/hair/long/3.png\",\n                            \"isUnlocked\": false,\n                            \"isSelected\": false,\n                            \"price\": 50\n                        }\n                    ]\n                },\n                {\n                    \"id\": \"5f4663ab-f712-46bc-9482-eb96e381c178\",\n                    \"styleName\": \"Curly\",\n                    \"colors\": [\n                        {\n                            \"id\": \"628e67cb-5bf3-456b-9c96-1fed046a397c\",\n                            \"url\": \"https://example.com/assets/hair/curly/1.png\",\n                            \"isUnlocked\": true,\n                            \"isSelected\": false,\n                            \"price\": 0\n                        },\n                        {\n                            \"id\": \"b9dc93f4-7b15-4da1-9fc7-771a46dc72a2\",\n                            \"url\": \"https://example.com/assets/hair/curly/2.png\",\n                            \"isUnlocked\": false,\n                            \"isSelected\": false,\n                            \"price\": 50\n                        },\n                        {\n                            \"id\": \"f65a99e2-be07-4b4a-b97c-4545c16be6dd\",\n                            \"url\": \"https://example.com/assets/hair/curly/3.png\",\n                            \"isUnlocked\": true,\n                            \"isSelected\": false,\n                            \"price\": 50\n                        }\n                    ]\n                },\n                {\n                    \"id\": \"74cc5c8d-cffb-425a-a6af-97e9ac69d482\",\n                    \"styleName\": \"Normal\",\n                    \"colors\": [\n                        {\n                            \"id\": \"2116729f-4adb-4ae4-9d8f-3646b9990ecc\",\n                            \"url\": \"https://example.com/assets/hair/normal/1.png\",\n                            \"isUnlocked\": false,\n                            \"isSelected\": false,\n                            \"price\": 0\n                        },\n                        {\n                            \"id\": \"ef6557cd-ecf9-49a1-a86a-c5c652434ead\",\n                            \"url\": \"https://example.com/assets/hair/normal/2.png\",\n                            \"isUnlocked\": false,\n                            \"isSelected\": false,\n                            \"price\": 50\n                        },\n                        {\n                            \"id\": \"53cc0fc3-2acd-4cda-86d4-c865b3ea60e7\",\n                            \"url\": \"https://example.com/assets/hair/normal/3.png\",\n                            \"isUnlocked\": false,\n                            \"isSelected\": false,\n                            \"price\": 50\n                        }\n                    ]\n                }\n            ]\n        },\n        \"dress\": {\n            \"name\": \"Dress\",\n            \"elements\": [\n                {\n                    \"id\": \"e073e2fe-a5ce-40a9-b002-7de7db182bfa\",\n                    \"styleName\": \"Neckless\",\n                    \"colors\": [\n                        {\n                            \"id\": \"aaa0f49a-d410-4ff3-a847-37e58d0c23b1\",\n                            \"url\": \"https://example.com/assets/dress/neckless/1.png\",\n                            \"isUnlocked\": true,\n                            \"isSelected\": false,\n                            \"price\": 0\n                        },\n                        {\n                            \"id\": \"eb4f612e-b68e-4cf0-8aaf-7979dae9de8a\",\n                            \"url\": \"https://example.com/assets/dress/neckless/2.png\",\n                            \"isUnlocked\": false,\n                            \"isSelected\": false,\n                            \"price\": 50\n                        },\n                        {\n                            \"id\": \"d96e6b31-e193-47b5-a981-9780e3b63153\",\n                            \"url\": \"https://example.com/assets/dress/neckless/3.png\",\n                            \"isUnlocked\": false,\n                            \"isSelected\": false,\n                            \"price\": 50\n                        }\n                    ]\n                },\n                {\n                    \"id\": \"a3fbe437-3eb9-4f31-9a23-6bde4205110d\",\n                    \"styleName\": \"Basic\",\n                    \"colors\": [\n                        {\n                            \"id\": \"cf162608-90a4-4672-a3c4-a0f927c6d839\",\n                            \"url\": \"https://example.com/assets/dress/basic/1.png\",\n                            \"isUnlocked\": false,\n                            \"isSelected\": false,\n                            \"price\": 0\n                        },\n                        {\n                            \"id\": \"e39ea197-c8a8-4501-813e-c9a236a39981\",\n                            \"url\": \"https://example.com/assets/dress/basic/2.png\",\n                            \"isUnlocked\": false,\n                            \"isSelected\": false,\n                            \"price\": 50\n                        },\n                        {\n                            \"id\": \"f6c54f3b-9b5b-4510-9a22-5c019a8d451e\",\n                            \"url\": \"https://example.com/assets/dress/basic/3.png\",\n                            \"isUnlocked\": false,\n                            \"isSelected\": false,\n                            \"price\": 50\n                        }\n                    ]\n                },\n                {\n                    \"id\": \"3c6c6680-f6a8-4614-a923-d8fe85d6fcbf\",\n                    \"styleName\": \"Tops\",\n                    \"colors\": [\n                        {\n                            \"id\": \"1a01cf3b-c1e1-487f-8e40-9788f2329afd\",\n                            \"url\": \"https://example.com/assets/dress/tops/1.png\",\n                            \"isUnlocked\": false,\n                            \"isSelected\": false,\n                            \"price\": 0\n                        },\n                        {\n                            \"id\": \"ec100580-2b46-463f-8ec9-a5dac93ecb96\",\n                            \"url\": \"https://example.com/assets/dress/tops/2.png\",\n                            \"isUnlocked\": false,\n                            \"isSelected\": false,\n                            \"price\": 50\n                        },\n                        {\n                            \"id\": \"a877ae65-39dd-4099-bde6-4e226ca74876\",\n                            \"url\": \"https://example.com/assets/dress/tops/3.png\",\n                            \"isUnlocked\": false,\n                            \"isSelected\": false,\n                            \"price\": 50\n                        }\n                    ]\n                }\n            ]\n        },\n        \"jewelry\": {\n            \"name\": \"Jewelry\",\n            \"elements\": [\n                {\n                    \"id\": \"f847e6fb-a3a5-40b2-acac-7aa8595036e3\",\n                    \"styleName\": \"Style 1\",\n                    \"colors\": [\n                        {\n                            \"id\": \"805502c8-ed62-41f2-8b93-fb867760f4d5\",\n                            \"url\": \"https://example.com/assets/jewelry/style 1/1.png\",\n                            \"isUnlocked\": false,\n                            \"isSelected\": false,\n                            \"price\": 0\n                        },\n                        {\n                            \"id\": \"fd4a06e5-c2f4-4c7a-aa42-3994abad7648\",\n                            \"url\": \"https://example.com/assets/jewelry/style 1/2.png\",\n                            \"isUnlocked\": false,\n                            \"isSelected\": false,\n                            \"price\": 50\n                        },\n                        {\n                            \"id\": \"177e84e0-3142-462e-8c06-09d3e7b0a090\",\n                            \"url\": \"https://example.com/assets/jewelry/style 1/3.png\",\n                            \"isUnlocked\": false,\n                            \"isSelected\": false,\n                            \"price\": 50\n                        }\n                    ]\n                }\n            ]\n        },\n        \"shoes\": null,\n        \"eyes\": null,\n        \"nose\": null,\n        \"skin\": null,\n        \"accessory\": null,\n        \"pet\": null\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "save customization",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"avatarId\" :\"b0177b7e-55e1-4808-8c44-0358f199513a\",\r\n   \r\n  \r\n  \"assetIds\": [\r\n    \"906248d1-47df-49dc-b0ea-b74763738293\"\r\n  ]\r\n\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base-url}}/avatar/customization",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"avatar",
+								"customization"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "reward",
+			"item": [
+				{
+					"name": "purchase avatar by avatar id",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base-url}}/avatar/purchase/00843abd-db82-4ce7-bd36-83f8341f1c18",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"avatar",
+								"purchase",
+								"00843abd-db82-4ce7-bd36-83f8341f1c18"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "purchase avatar by avatar id",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{childToken}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base-url}}/avatar/purchase/00843abd-db82-4ce7-bd36-83f8341f1c18",
+									"host": [
+										"{{base-url}}"
+									],
+									"path": [
+										"avatar",
+										"purchase",
+										"00843abd-db82-4ce7-bd36-83f8341f1c18"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "120"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"78-H5DrGzUvIpyJnuRMqWiZkzHvxLI\""
+								},
+								{
+									"key": "Date",
+									"value": "Mon, 08 Dec 2025 07:19:04 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Avatar purchased successfully\",\n    \"data\": {\n        \"ownershipId\": \"778589c8-56b8-4930-9f07-cc077bee57bf\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "unlock assets",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"assetIds\":[\"\"]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base-url}}/avatar/unlock-asset",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"avatar",
+								"unlock-asset"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "purchase avatar by avatar id",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{childToken}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base-url}}/avatar/purchase/00843abd-db82-4ce7-bd36-83f8341f1c18",
+									"host": [
+										"{{base-url}}"
+									],
+									"path": [
+										"avatar",
+										"purchase",
+										"00843abd-db82-4ce7-bd36-83f8341f1c18"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "120"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"78-H5DrGzUvIpyJnuRMqWiZkzHvxLI\""
+								},
+								{
+									"key": "Date",
+									"value": "Mon, 08 Dec 2025 07:19:04 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Avatar purchased successfully\",\n    \"data\": {\n        \"ownershipId\": \"778589c8-56b8-4930-9f07-cc077bee57bf\"\n    }\n}"
 						}
 					]
 				}
