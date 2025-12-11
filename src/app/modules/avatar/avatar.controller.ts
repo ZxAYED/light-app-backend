@@ -172,9 +172,8 @@ const getCustomizationData: RequestHandler = catchAsync(async (req: any, res) =>
 
 const saveCustomization: RequestHandler = catchAsync(async (req: any, res) => {
   if (!req.user) throw new AppError(401, "Unauthorized");
-  const { avatarId } = req.params;
-  if (!avatarId) throw new AppError(400, "avatarId missing");
-  const { assetIds } = req.body as { assetIds: string[] };
+  const { avatarId, assetIds } = req.body as { avatarId: string; assetIds: string[] };
+  if (!avatarId) throw new AppError(400, "avatarId missing in body");
   const result = await AvatarService.saveCustomization(req.user.id, avatarId, assetIds || []);
   sendResponse(res, {
     statusCode: status.OK,

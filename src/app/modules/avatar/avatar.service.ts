@@ -104,7 +104,7 @@ const deleteAssetInternal = async (assetId: string) => {
     try {
       await deleteImageFromSupabase(asset.assetImgPath);
     } catch (e: any) {
-      console.error("Supabase asset delete failed:", e);
+      console.error("Supabase asset image delete failed:", e);
       throw new AppError(400, e.message || e.data.message || "Asset image delete failed");
     }
   }
@@ -114,6 +114,12 @@ const deleteAssetInternal = async (assetId: string) => {
     await tx.notification.deleteMany({ where: { assetId } });
 
     await tx.asset.delete({ where: { id: assetId } });
+
+    // if the style has no more assets, delete the style too
+    const remaining = await tx.asset.count({ where: { styleId: asset.styleId } });
+    if (remaining === 0) {
+      await tx.assetStyle.delete({ where: { id: asset.styleId } });
+    }
   });
 
   return assetId;
@@ -315,9 +321,19 @@ const getOwnedAvatarsForChild = async (childUserId: string) => {
     }
   }
 
-  const equipped = ownerships.find((o) => o.isActive)?.avatar || null;
-  const unequipped = ownerships.filter((o) => !o.isActive).map((o) => o.avatar);
-  return { equipped, unequipped };
+  const activeOwnership = ownerships.find((o) => o.isActive) || null;
+ 
+  const unequippedAvatars = ownerships.filter((o) => !o.isActive).map((o) => o.avatar);
+
+  const equippedPreset = activeOwnership
+    ? await buildPresetPayload(child.id, activeOwnership.avatarId)
+    : null;
+
+  const unequipped = await Promise.all(
+    unequippedAvatars.map((a) => buildPresetPayload(child.id, a.id))
+  );
+
+  return { equipped: equippedPreset, unequipped };
 };
 
 const getAssetsByStyle = async (styleId: string) => {
@@ -392,52 +408,32 @@ const getAssetsByCategoryType = async (type: string, childUserId?: string) => {
   });
 };
 
-const getCustomizationData = async (
-  childUserId: string,
-  avatarId: string,
-
-) => {
-  const child = await prisma.childProfile.findFirst({
-    where: { userId: childUserId },
-    select: { id: true },
-  });
-  if (!child) throw new AppError(404, "Child not found");
-
-  const owns = await prisma.childAvatar.findFirst({
-    where: { childId: child.id, avatarId },
-  });
+const buildCustomizationPayload = async (childId: string, avatarId: string) => {
+  const owns = await prisma.childAvatar.findFirst({ where: { childId, avatarId } });
   if (!owns) throw new AppError(403, "Avatar not owned by child");
 
   const avatar = await prisma.avatar.findUnique({
     where: { id: avatarId },
     include: {
-      categories: {
-        include: {
-          assetStyles: {
-            include: { colors: true },
-          },
-        },
-      },
+      categories: { include: { assetStyles: { include: { colors: true } } } },
     },
   });
   if (!avatar) throw new AppError(404, "Avatar not found");
 
   const unlockedAssets = await prisma.childAsset.findMany({
-    where: { childId: child.id },
+    where: { childId },
     select: { assetId: true },
   });
-
   const unlockedAssetIds = new Set(unlockedAssets.map((a) => a.assetId));
 
-  // Fetch equipped assets
   const equipped = await prisma.childAvatarEquipped.findMany({
     where: { childAvatarId: owns.id },
     select: { assetId: true },
   });
   const equippedAssetIds = new Set(equipped.map((e) => e.assetId));
 
-  // Initialize all possible keys to null to match Flutter structure expectation
   const result: Record<string, any> = {
+    avatarId: avatarId,
     avatarImgUrl: avatar.avatarImgUrl,
     gender: avatar.gender,
     region: avatar.region,
@@ -450,33 +446,98 @@ const getCustomizationData = async (
     skin: null,
     accessory: null,
     pet: null,
-
   };
 
   avatar.categories.forEach((category) => {
     const key = category.type.toLowerCase();
     const name = category.type.charAt(0) + category.type.slice(1).toLowerCase();
-
     const elements = category.assetStyles.map((style) => {
       const colors = style.colors.map((asset) => {
         const isUnlocked = unlockedAssetIds.has(asset.id) || asset.isStarter;
-
         return {
           id: asset.id,
           url: asset.assetImage,
           isUnlocked,
-
           isSelected: equippedAssetIds.has(asset.id),
           price: asset.price,
         };
       });
       return { id: style.id, styleName: style.styleName, colors };
     });
-
     result[key] = elements.length > 0 ? { name, elements } : null;
   });
 
   return result;
+};
+
+const buildPresetPayload = async (childId: string, avatarId: string) => {
+  const owns = await prisma.childAvatar.findFirst({ where: { childId, avatarId } });
+  if (!owns) throw new AppError(403, "Avatar not owned by child");
+
+  const avatar = await prisma.avatar.findUnique({
+    where: { id: avatarId },
+    include: { categories: true },
+  });
+  if (!avatar) throw new AppError(404, "Avatar not found");
+
+  const equipped = await prisma.childAvatarEquipped.findMany({
+    where: { childAvatarId: owns.id },
+    select: { assetId: true },
+  });
+  const equippedAssetIds = equipped.map((e) => e.assetId);
+
+  const assets = equippedAssetIds.length
+    ? await prisma.asset.findMany({
+        where: { id: { in: equippedAssetIds } },
+        include: { style: { include: { category: true } } },
+      })
+    : [];
+
+  const result: Record<string, any> = {
+    avatarId: avatarId,
+    avatarImgUrl: avatar.avatarImgUrl,
+    gender: avatar.gender,
+    region: avatar.region,
+    hair: null,
+    dress: null,
+    jewelry: null,
+    shoes: null,
+    eyes: null,
+    nose: null,
+    skin: null,
+    accessory: null,
+    pet: null,
+  };
+
+  for (const asset of assets) {
+    const type = asset.style.category.type;
+    const key = type.toLowerCase();
+    const name = type.charAt(0) + type.slice(1).toLowerCase();
+    result[key] = {
+      name,
+      selected: {
+        styleId: asset.style.id,
+        styleName: asset.style.styleName,
+        assetId: asset.id,
+        url: asset.assetImage,
+        price: asset.price,
+      },
+    };
+  }
+
+  return result;
+};
+
+const getCustomizationData = async (
+  childUserId: string,
+  avatarId: string,
+) => {
+  const child = await prisma.childProfile.findFirst({
+    where: { userId: childUserId },
+    select: { id: true },
+  });
+  if (!child) throw new AppError(404, "Child not found");
+  return buildCustomizationPayload(child.id, avatarId);
 };
 
 const saveCustomization = async (
@@ -484,11 +545,15 @@ const saveCustomization = async (
   avatarId: string,
   assetIds: string[]
 ) => {
-  if (!Array.isArray(assetIds) || assetIds.length === 0) {
+  if (!Array.isArray(assetIds)) {
     throw new AppError(400, "assetIds required");
   }
 
   return prisma.$transaction(async (tx) => {
+    const normalizedAssetIds = Array.from(new Set(assetIds.map((id) => (id || "").trim()).filter((id) => id)));
+    if (normalizedAssetIds.length === 0) {
+      throw new AppError(400, "assetIds required");
+    }
     const child = await tx.childProfile.findFirst({
       where: { userId: childUserId },
       select: { id: true },
@@ -501,30 +566,54 @@ const saveCustomization = async (
     if (!owns) throw new AppError(403, "Avatar not owned by child");
 
     const validAssets = await tx.asset.findMany({
-      where: {
-        id: { in: assetIds },
-        style: { category: { avatarId } },
-      },
-      select: { id: true },
+      where: { id: { in: normalizedAssetIds } },
+      include: { style: { include: { category: true } } },
     });
 
-    if (validAssets.length !== assetIds.length) {
-      throw new AppError(400, "One or more assets do not belong to this avatar");
+    const foundIds = new Set(validAssets.map((a) => a.id));
+    const missingIds = normalizedAssetIds.filter((id) => !foundIds.has(id));
+    if (missingIds.length > 0) {
+      throw new AppError(404, `Asset(s) not found: ${missingIds.join(",")}`);
     }
 
+    const wrongAvatarIds = validAssets
+      .filter((a) => a.style?.category?.avatarId !== avatarId)
+      .map((a) => a.id);
+    if (wrongAvatarIds.length > 0) {
+      throw new AppError(400, `One or more assets do not belong to this avatar: ${wrongAvatarIds.join(",")}`);
+    }
+
+    // enforce one asset per category (last occurrence wins)
+    const orderMap = new Map<string, number>();
+    normalizedAssetIds.forEach((id, idx) => orderMap.set(id, idx));
+    const selectedByCategory = new Map<string, string>();
+    for (const asset of validAssets) {
+      const cat = asset.style.category.type;
+      const prev = selectedByCategory.get(cat);
+      if (!prev) {
+        selectedByCategory.set(cat, asset.id);
+      } else {
+        // choose the one that appears later in the provided list
+        const prevIdx = orderMap.get(prev) ?? -1;
+        const curIdx = orderMap.get(asset.id) ?? -1;
+        if (curIdx >= prevIdx) selectedByCategory.set(cat, asset.id);
+      }
+    }
+    const selectedAssetIds = Array.from(selectedByCategory.values());
+ 
     const owned = await tx.childAsset.findMany({
-      where: { childId: child.id, assetId: { in: validAssets.map((a) => a.id) } },
+      where: { childId: child.id, assetId: { in: normalizedAssetIds } },
       select: { assetId: true },
     });
     const ownedSet = new Set(owned.map((o) => o.assetId));
-    const missing = validAssets.map((a) => a.id).filter((id) => !ownedSet.has(id));
-    if (missing.length > 0) {
-      throw new AppError(400, `Locked assetIds: ${missing.join(",")}`);
+    const missingOwned = normalizedAssetIds.filter((id) => !ownedSet.has(id));
+    if (missingOwned.length > 0) {
+      throw new AppError(400, `Some assets are locked and cannot be equipped. Locked assetIds: ${missingOwned.join(",")}`);
     }
 
     await tx.childAvatarEquipped.deleteMany({ where: { childAvatarId: owns.id } });
     await tx.childAvatarEquipped.createMany({
-      data: validAssets.map((a) => ({ childAvatarId: owns.id, assetId: a.id })),
+      data: selectedAssetIds.map((id) => ({ childAvatarId: owns.id, assetId: id })),
     });
 
     await tx.childAvatar.updateMany({ where: { childId: child.id }, data: { isActive: false } });
@@ -536,7 +625,7 @@ const saveCustomization = async (
     });
 
     return {
-      savedCount: validAssets.length,
+      savedCount: selectedAssetIds.length,
       unlockedAssetIds: unlocked.map((a) => a.assetId),
     };
   });
