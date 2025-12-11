@@ -326,11 +326,11 @@ const getOwnedAvatarsForChild = async (childUserId: string) => {
   const unequippedAvatars = ownerships.filter((o) => !o.isActive).map((o) => o.avatar);
 
   const equippedPreset = activeOwnership
-    ? await buildPresetIndexPayload(child.id, activeOwnership.avatarId)
+    ? await buildPresetSelectedPayload(child.id, activeOwnership.avatarId)
     : null;
 
   const unequipped = await Promise.all(
-    unequippedAvatars.map((a) => buildPresetIndexPayload(child.id, a.id))
+    unequippedAvatars.map((a) => buildPresetSelectedPayload(child.id, a.id))
   );
 
   return { equipped: equippedPreset, unequipped };
@@ -437,15 +437,6 @@ const buildCustomizationPayload = async (childId: string, avatarId: string) => {
     avatarImgUrl: avatar.avatarImgUrl,
     gender: avatar.gender,
     region: avatar.region,
-    hair: null,
-    dress: null,
-    jewelry: null,
-    shoes: null,
-    eyes: null,
-    nose: null,
-    skin: null,
-    accessory: null,
-    pet: null,
   };
 
   avatar.categories.forEach((category) => {
@@ -464,7 +455,9 @@ const buildCustomizationPayload = async (childId: string, avatarId: string) => {
       });
       return { id: style.id, styleName: style.styleName, colors };
     });
-    result[key] = elements.length > 0 ? { name, elements } : null;
+    if (elements.length > 0) {
+      result[key] = { name, elements };
+    }
   });
 
   return result;
@@ -498,15 +491,6 @@ const buildPresetPayload = async (childId: string, avatarId: string) => {
     avatarImgUrl: avatar.avatarImgUrl,
     gender: avatar.gender,
     region: avatar.region,
-    hair: null,
-    dress: null,
-    jewelry: null,
-    shoes: null,
-    eyes: null,
-    nose: null,
-    skin: null,
-    accessory: null,
-    pet: null,
   };
 
   for (const asset of assets) {
@@ -557,15 +541,6 @@ const buildPresetIndexPayload = async (childId: string, avatarId: string) => {
     avatarImgUrl: avatar.avatarImgUrl,
     gender: avatar.gender,
     region: avatar.region,
-    hair: null,
-    dress: null,
-    jewelry: null,
-    shoes: null,
-    eyes: null,
-    nose: null,
-    skin: null,
-    accessory: null,
-    pet: null,
   };
 
   avatar.categories.forEach((category) => {
@@ -586,6 +561,75 @@ const buildPresetIndexPayload = async (childId: string, avatarId: string) => {
       if (elementsIndex !== -1) break;
     }
     result[key] = elementsIndex !== -1 ? { name, elementsIndex, colorsIndex } : null;
+  });
+
+  return result;
+};
+
+const buildPresetSelectedPayload = async (childId: string, avatarId: string) => {
+  const owns = await prisma.childAvatar.findFirst({ where: { childId, avatarId } });
+  if (!owns) throw new AppError(403, "Avatar not owned by child");
+
+  const avatar = await prisma.avatar.findUnique({
+    where: { id: avatarId },    include: {
+      categories: {
+        include: {
+          assetStyles: {
+            include: { colors: true },
+          },
+        },
+      },
+    },
+  });
+  if (!avatar) throw new AppError(404, "Avatar not found");
+
+  const unlockedAssets = await prisma.childAsset.findMany({ where: { childId }, select: { assetId: true } });
+  const unlockedIds = new Set(unlockedAssets.map((a) => a.assetId));
+
+  const equipped = await prisma.childAvatarEquipped.findMany({ where: { childAvatarId: owns.id }, select: { assetId: true } });
+  const equippedSet = new Set(equipped.map((e) => e.assetId));
+
+  const result: Record<string, any> = {
+    avatarId: avatarId,
+    avatarImgUrl: avatar.avatarImgUrl,
+    gender: avatar.gender,
+    region: avatar.region,
+    // hair: null,
+    // dress: null,
+    // jewelry: null,
+    // shoes: null,
+    // eyes: null,
+    // nose: null,
+    // skin: null,
+    // accessory: null,
+    // pet: null,
+  };
+
+  avatar.categories.forEach((category) => {
+    const key = category.type.toLowerCase();
+    const name = category.type.charAt(0) + category.type.slice(1).toLowerCase();
+    let payload: any = null;
+    for (let si = 0; si < category.assetStyles.length; si++) {
+      const style = category.assetStyles[si];
+      for (let ci = 0; ci < style.colors.length; ci++) {
+        const asset = style.colors[ci];
+        if (equippedSet.has(asset.id)) {
+          const color = {
+            id: asset.id,
+            url: asset.assetImage,
+            isUnlocked: unlockedIds.has(asset.id) || asset.isStarter,
+            isSelected: true,
+            price: asset.price,
+          };
+          payload = { name, elements: [{ id: style.id, styleName: style.styleName, colors: [color] }] };
+          break;
+        }
+      }
+      if (payload) break;
+    }
+    if (payload) {
+      result[key] = payload;
+    }
   });
 
   return result;
