@@ -55,10 +55,62 @@ const remove = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const registerToken = catchAsync(async (req: Request & { user?: any }, res: Response) => {
+  const { token, platform, userId, childId } = req.body || {};
+  if (!token || !platform) {
+    sendResponse(res, { statusCode: status.BAD_REQUEST, success: false, message: "token and platform required", data: null });
+    return;
+  }
+  const result = await NotificationService.registerPushToken({ token, platform, userId, childId });
+  sendResponse(res, { statusCode: status.OK, success: true, message: "Push token registered", data: result });
+});
+
+const unregisterToken = catchAsync(async (req: Request, res: Response) => {
+  const { token } = req.body || {};
+  if (!token) {
+    sendResponse(res, { statusCode: status.BAD_REQUEST, success: false, message: "token required", data: null });
+    return;
+  }
+  const result = await NotificationService.unregisterPushToken(token);
+  sendResponse(res, { statusCode: status.OK, success: true, message: "Push token unregistered", data: result });
+});
+
+const sendNow = catchAsync(async (req: Request & { user?: any }, res: Response) => {
+  const { type, title, message, childId, parentUserId, data } = req.body || {};
+  if (!type || !title || !message) {
+    sendResponse(res, { statusCode: status.BAD_REQUEST, success: false, message: "type, title, message required", data: null });
+    return;
+  }
+  const result = await NotificationService.createAndSendNow({ type, title, message, childId, parentUserId, data });
+  sendResponse(res, { statusCode: status.CREATED, success: true, message: "Notification sent", data: result });
+});
+
+const listFeed = catchAsync(async (req: Request & { user?: any }, res: Response) => {
+  const result = await NotificationService.listFeedForUser(req.user, req.query);
+  sendResponse(res, { statusCode: status.OK, success: true, message: "Notification feed fetched", data: result });
+});
+
+const markRead = catchAsync(async (req: Request, res: Response) => {
+  const result = await NotificationService.markRead(req.params.id);
+  sendResponse(res, { statusCode: status.OK, success: true, message: "Notification marked read", data: result });
+});
+
+const markAllRead = catchAsync(async (req: Request, res: Response) => {
+  const { childId, parentUserId } = req.body || {};
+  const result = await NotificationService.markAllRead({ childId, parentUserId });
+  sendResponse(res, { statusCode: status.OK, success: true, message: "Notifications marked read", data: result });
+});
+
 export const NotificationController = {
   getAll,
   getById,
   create,
   update,
   remove,
+  registerToken,
+  unregisterToken,
+  sendNow,
+  listFeed,
+  markRead,
+  markAllRead,
 };
