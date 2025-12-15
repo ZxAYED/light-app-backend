@@ -6,6 +6,18 @@ import AppError from "../../Errors/AppError";
 import { GoalService } from "./goal.service";
 
 export const GoalController = {
+  startTask: catchAsync(async (req: Request & { user?: User }, res: Response) => {
+    if (!req.user) throw new AppError(401, "Unauthorized");
+    const { goalId } = req.params;
+    if (!goalId) throw new AppError(400, "Goal ID missing");
+    const result = await GoalService.startTask({ goalId, userId: req.user.id });
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Task started. It will auto-complete after the required duration.",
+      data: result,
+    });
+  }),
 
   createGoal: catchAsync(async (req: Request & { user?: User }, res: Response) => {
     if (!req.user) throw new AppError(401, "Unauthorized");

@@ -4,7 +4,7 @@ import { buildDynamicFilters } from "../../../helpers/buildDynamicFilters";
 import { paginationHelper } from "../../../helpers/paginationHelper";
 import prisma from "../../../shared/prisma";
 
-const NotificationSearchableFields = ["name"]; // adjust fields
+const NotificationSearchableFields = ["name"]; 
 
 const getAllNotificationFromDB = async (query: any) => {
   const { page, limit, skip, sortBy, sortOrder } =
@@ -46,8 +46,12 @@ const deleteNotificationFromDB = async (id: string) => {
   return prisma.notification.delete({ where: { id } });
 };
 
-const registerPushToken = async (payload: { token: string; platform: "ANDROID"|"IOS"; userId?: string; childId?: string }) => {
-  return prisma.pushToken.upsert({ where: { token: payload.token }, update: { platform: payload.platform, userId: payload.userId, childId: payload.childId }, create: { token: payload.token, platform: payload.platform, userId: payload.userId, childId: payload.childId } });
+const registerPushToken = async (payload: { token: string; platform: "ANDROID" | "IOS"; userId?: string; childId?: string }) => {
+  return prisma.pushToken.upsert({
+    where: { token: payload.token },
+    update: { platform: payload.platform, userId: payload.userId, childId: payload.childId },
+    create: { token: payload.token, platform: payload.platform, userId: payload.userId, childId: payload.childId }
+  });
 };
 
 const unregisterPushToken = async (token: string) => {
@@ -101,7 +105,7 @@ const createAndSendNow = async (input: { type: any; title: string; message: stri
     for (const t of tokens) {
       try {
         await sendFcmV1ToToken(String(process.env.FIREBASE_PROJECT_ID || ""), t, input.title, input.message, { type: String(input.type), childId: input.childId, ...(input.data || {}) });
-      } catch {}
+      } catch { }
     }
   }
   if (input.parentUserId) {
@@ -109,7 +113,7 @@ const createAndSendNow = async (input: { type: any; title: string; message: stri
     for (const t of tokens) {
       try {
         await sendFcmV1ToToken(String(process.env.FIREBASE_PROJECT_ID || ""), t, input.title, input.message, { type: String(input.type), parentUserId: input.parentUserId, ...(input.data || {}) });
-      } catch {}
+      } catch { }
     }
   }
   return notif;

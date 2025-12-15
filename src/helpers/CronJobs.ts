@@ -1,7 +1,8 @@
 import cron from "node-cron";
 
-import { GoalStatus, GoalType } from "@prisma/client";
+import { GoalStatus, GoalType, NotificationType } from "@prisma/client";
 import prisma from "../shared/prisma";
+import { NotificationService } from "../app/modules/notification/notification.service";
 
 
 function daysBetween(date1: Date, date2: Date) {
@@ -23,6 +24,29 @@ cron.schedule("0 0 * * *", async () => {
     data: { percentage: 0 },
   });
 
+  const assignments = await prisma.goalAssignment.findMany({
+    where: {
+      goal: {
+        type: GoalType.DAILY,
+        status: GoalStatus.ACTIVE,
+        isDeleted: false,
+      },
+    },
+    select: {
+      childId: true,
+      goalId: true,
+      goal: { select: { title: true } },
+    },
+  });
+  for (const a of assignments) {
+    await NotificationService.createAndSendNow({
+      type: NotificationType.DAILY_REMINDER,
+      title: "Daily reminder",
+      message: `Time to work on: ${a.goal.title}`,
+      childId: a.childId,
+      data: { goalId: a.goalId },
+    });
+  }
 
 });
 
