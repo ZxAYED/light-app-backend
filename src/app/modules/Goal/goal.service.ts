@@ -325,7 +325,8 @@ updateProgress: async (payload: {
     });
     if (!child) throw new AppError(404, "Child profile not found");
 
-    // 2. Get assignment
+    // 2. Get 
+    // assignment
     const assignment = await tx.goalAssignment.findUnique({
       where: {
         goalId_childId: {
