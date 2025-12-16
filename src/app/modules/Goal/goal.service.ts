@@ -1,9 +1,60 @@
-import { AuthorRole, GoalStatus, UserRole } from "@prisma/client";
+import { AuthorRole, GoalStatus, NotificationType, UserRole } from "@prisma/client";
 import prisma from "../../../shared/prisma";
 import AppError from "../../Errors/AppError";
+import { NotificationService } from "../notification/notification.service";
 import { CreateGoalInput, UpdateGoalInput } from "./goal.validation";
 
 export const GoalService = {
+ startTask: async (payload: { goalId: string; userId: string }) => {
+
+  const child = await prisma.childProfile.findUnique({ where: { userId: payload.userId } });
+  if (!child) throw new AppError(404, "Child profile not found");
+
+  const assignment = await prisma.goalAssignment.findUnique({
+    where: { goalId_childId: { goalId: payload.goalId, childId: child.id } },
+    include: { goal: true },
+  });
+
+  if (!assignment) throw new AppError(404, "Goal assignment not found");
+
+  if (assignment.goal.status === "PAUSED") throw new AppError(400, "Goal is paused");
+  if (assignment.goal.status === "COMPLETED") throw new AppError(400, "Goal is completed");
+
+  const duration = assignment.goal.durationMin || 0;
+
+  if (duration <= 0) throw new AppError(400, "Goal duration is not set");
+  
+  const currentMinutes = Math.round(((assignment.percentage ?? 0) / 100) * duration);
+  const remaining = Math.max(duration - currentMinutes, 0);
+  if (remaining === 0) {
+    return {
+      goalId: payload.goalId,
+      childId: child.id,
+      scheduledMs: 0,
+      endsAt: new Date(),
+      alreadyCompleted: true,
+    };
+  }
+  const key = `${payload.goalId}:${child.id}`;
+  if ((global as any).__goalTimers?.has(key)) {
+    const t = (global as any).__goalTimers.get(key);
+    clearTimeout(t);
+  } else {
+    (global as any).__goalTimers = (global as any).__goalTimers || new Map<string, NodeJS.Timeout>();
+  }
+  const ms = remaining * 60 * 1000;
+  const timeout = setTimeout(async () => {
+    try {
+      await GoalService.updateProgress({ goalId: payload.goalId, userId: payload.userId, minutesCompleted: remaining });
+    } catch {}
+    finally {
+      (global as any).__goalTimers.delete(key);
+    }
+  }, ms);
+  (global as any).__goalTimers.set(key, timeout);
+  const endsAt = new Date(Date.now() + ms);
+  return { goalId: payload.goalId, childId: child.id, scheduledMs: ms, endsAt };
+ },
 
  createGoal: async (
   payload: CreateGoalInput & { authorId: string; authorRole: UserRole }
@@ -30,9 +81,8 @@ export const GoalService = {
     }
   }
 
-  // --- CREATE GOAL ---
-  return prisma.$transaction(async (tx) => {
-    const createdGoal = await tx.goal.create({
+  const createdGoal = await prisma.$transaction(async (tx) => {
+    const g = await tx.goal.create({
       data: {
         ...goalData,
         authorId: payload.authorId,
@@ -40,17 +90,24 @@ export const GoalService = {
         status: "ACTIVE",
       },
     });
-
-    // Assign children
     await tx.goalAssignment.createMany({
       data: assignedChildIds.map((childId) => ({
-        goalId: createdGoal.id,
+        goalId: g.id,
         childId,
       })),
     });
-
-    return createdGoal;
+    return g;
   });
+  for (const childId of assignedChildIds) {
+    await NotificationService.createAndSendNow({
+      type: NotificationType.GOAL_CREATED,
+      title: "New goal assigned",
+      message: `You have a new goal: ${createdGoal.title}`,
+      childId,
+      data: { goalId: createdGoal.id },
+    });
+  }
+  return createdGoal;
 },
 
 
@@ -107,8 +164,8 @@ updateGoal: async (
   }
 
  
-  return prisma.$transaction(async (tx) => {
-    const updatedGoal = await tx.goal.update({
+  const updatedGoal = await prisma.$transaction(async (tx) => {
+    const g = await tx.goal.update({
       where: { id: payload.goalId },
       data: {
         title: payload.title,
@@ -122,24 +179,18 @@ updateGoal: async (
         isDeleted: payload.isDeleted ?? undefined,
       },
     });
-
-    // Parent-specific logic
     if (payload.authorRole === UserRole.PARENT) {
-      // Handle deletion
       if (payload.isDeleted === true) {
         await tx.goalAssignment.updateMany({
           where: { goalId: payload.goalId },
           data: { isDeleted: true },
         });
-        return updatedGoal;
+        return g;
       }
-
-      // Update assigned children
       if (payload.assignedChildIds) {
         await tx.goalAssignment.deleteMany({
           where: { goalId: payload.goalId },
         });
-
         await tx.goalAssignment.createMany({
           data: payload.assignedChildIds.map((childId) => ({
             goalId: payload.goalId,
@@ -148,9 +199,22 @@ updateGoal: async (
         });
       }
     }
-
-    return updatedGoal;
+    return g;
   });
+  const assigned = await prisma.goalAssignment.findMany({
+    where: { goalId: payload.goalId },
+    select: { childId: true },
+  });
+  for (const a of assigned) {
+    await NotificationService.createAndSendNow({
+      type: NotificationType.GOAL_UPDATED,
+      title: "Goal updated",
+      message: `Your goal was updated: ${updatedGoal.title}`,
+      childId: a.childId,
+      data: { goalId: payload.goalId },
+    });
+  }
+  return updatedGoal;
 },
 
 
@@ -203,7 +267,7 @@ updateProgress: async (payload: {
   userId: string;
   minutesCompleted: number;
 }) => {
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     // 1. Get child profile
     const child = await tx.childProfile.findUnique({
       where: { userId: payload.userId },
@@ -247,7 +311,7 @@ updateProgress: async (payload: {
     const justCompleted = childCompleted && !previouslyCompleted;
 
     // 3. Update assignment progress
- await tx.goalAssignment.update({
+    await tx.goalAssignment.update({
       where: { id: assignment.id },
       data: {
         percentage: newPercent,
@@ -306,6 +370,55 @@ updateProgress: async (payload: {
       totalChildren,
     };
   });
+  const childProfile = await prisma.childProfile.findUnique({
+    where: { userId: payload.userId },
+    select: { id: true, name: true },
+  });
+  const goal = await prisma.goal.findUnique({
+    where: { id: payload.goalId },
+    select: { title: true, authorId: true },
+  });
+  if (goal) {
+    await NotificationService.createAndSendNow({
+      type: NotificationType.CHILD_PROGRESS_UPDATE,
+      title: "Progress updated",
+      message: `${childProfile?.name || "Child"} progress on ${goal.title} is ${result.childProgressPercent}%`,
+      parentUserId: goal.authorId,
+      data: { goalId: payload.goalId, percent: String(result.childProgressPercent) },
+    });
+    if (result.childCompleted && (result.rewardGiven || 0) > 0 && childProfile) {
+      await NotificationService.createAndSendNow({
+        type: NotificationType.REWARD_UNLOCKED,
+        title: "Reward unlocked",
+        message: `You earned ${result.rewardGiven} coins on ${goal.title}`,
+        childId: childProfile.id,
+        data: { goalId: payload.goalId },
+      });
+    }
+    if (result.goalStatus === "COMPLETED") {
+      await NotificationService.createAndSendNow({
+        type: NotificationType.GOAL_COMPLETED,
+        title: "Goal completed",
+        message: `${goal.title} has been completed`,
+        parentUserId: goal.authorId,
+        data: { goalId: payload.goalId },
+      });
+      const assigned = await prisma.goalAssignment.findMany({
+        where: { goalId: payload.goalId },
+        select: { childId: true },
+      });
+      for (const a of assigned) {
+        await NotificationService.createAndSendNow({
+          type: NotificationType.GOAL_COMPLETED,
+          title: "Goal completed",
+          message: `${goal.title} has been completed`,
+          childId: a.childId,
+          data: { goalId: payload.goalId },
+        });
+      }
+    }
+  }
+  return result;
 },
 
 };

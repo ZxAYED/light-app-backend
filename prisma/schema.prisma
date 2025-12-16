@@ -28,6 +28,8 @@ model User {
   Notification           Notification[]
   parentProfile          ParentProfile?
   PushToken              PushToken[]
+  postsAuthored          Post[]
+  postCommentsAuthored   PostComment[]
 
   @@index([role])
   @@index([email])
@@ -126,6 +128,41 @@ model Goal {
   @@index([type])
   @@index([createdAt])
   @@index([title])
+}
+
+model Post {
+  id          String     @id @default(uuid())
+  authorId    String
+  authorRole  AuthorRole @default(PARENT)
+  title       String?
+  content     String
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  author   User          @relation(fields: [authorId], references: [id])
+  comments PostComment[]
+
+  @@index([authorId])
+  @@index([createdAt])
+  @@index([title])
+}
+
+model PostComment {
+  id         String     @id @default(uuid())
+  postId     String
+  authorId   String
+  authorRole AuthorRole @default(PARENT)
+  content    String
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id])
+
+  @@index([postId])
+  @@index([authorId])
+  @@index([createdAt])
 }
 
 model GoalAssignment {
@@ -433,8 +470,6 @@ enum NotificationType {
   GOAL_UPDATED
   GOAL_COMPLETED
   HELP_REQUEST
-  HELP_REQUEST_ACCEPTED
-  HELP_REQUEST_REJECTED
   REWARD_UNLOCKED
   DAILY_REMINDER
   CHILD_PROGRESS_UPDATE

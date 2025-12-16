@@ -4,7 +4,7 @@ import { buildDynamicFilters } from "../../../helpers/buildDynamicFilters";
 import { paginationHelper } from "../../../helpers/paginationHelper";
 import prisma from "../../../shared/prisma";
 
-const NotificationSearchableFields = ["name"]; // adjust fields
+const NotificationSearchableFields = ["name"]; 
 
 const getAllNotificationFromDB = async (query: any) => {
   const { page, limit, skip, sortBy, sortOrder } =
@@ -50,21 +50,15 @@ const registerPushToken = async (payload: { token: string; platform: "ANDROID" |
   return prisma.pushToken.upsert({
     where: { token: payload.token },
     update: { platform: payload.platform, userId: payload.userId, childId: payload.childId },
-    create: {
-      token: payload.token,
-      platform: payload.platform,
-      userId: payload.userId,
-      childId: payload.childId
-    }
+    create: { token: payload.token, platform: payload.platform, userId: payload.userId, childId: payload.childId }
   });
 };
 
 const unregisterPushToken = async (token: string) => {
-  try {
-    return await prisma.pushToken.delete({ where: { token } });
-  } catch {
-    return null;
-  }
+  const existing = await prisma.pushToken.findUnique({ where: { token } });
+  if (!existing) return null;
+  await prisma.pushToken.delete({ where: { token } });
+  return { deleted: true };
 };
 
 const tokensForChild = async (childId: string) => {

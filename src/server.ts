@@ -1,6 +1,6 @@
 import app from "./app";
 import "./helpers/CronJobs";
-import "./helpers/CronJobs";
+
 const port = 5000;
 
 async function main() {

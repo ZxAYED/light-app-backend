@@ -9,6 +9,12 @@ import { createGoalSchema, updateGoalSchema, updateProgressSchema } from "./goal
 const router = Router();
 
 router.post(
+  "/start-task/:goalId",
+  RoleValidation(UserRole.CHILD),
+  GoalController.startTask
+);
+
+router.post(
   "/create-goal",
   RoleValidation(UserRole.PARENT, UserRole.CHILD),
   validateJSON(createGoalSchema),
