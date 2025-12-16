@@ -505,10 +505,16 @@ const createChild = async (payload: CreateChildInput & { image?: string, imagePa
       avatarToAssign = await tx.avatar.findUnique({ where: { id: config.DefaultAvatarId } });
     }
     if (!avatarToAssign) {
+      avatarToAssign = await tx.avatar.findFirst({
+        where: { gender: payload.gender as any },
+        orderBy: { createdAt: "asc" },
+      });
+    }
+    if (!avatarToAssign) {
       avatarToAssign = await tx.avatar.findFirst({ orderBy: { createdAt: "asc" } });
     }
     if (avatarToAssign) {
-      await tx.childAvatar.create({
+      const ownership = await tx.childAvatar.create({
         data: {
           childId: child.id,
           avatarId: avatarToAssign.id,
@@ -519,6 +525,38 @@ const createChild = async (payload: CreateChildInput & { image?: string, imagePa
         where: { id: child.id },
         data: { avatarId: avatarToAssign.id },
       });
+
+      const full = await tx.avatar.findUnique({
+        where: { id: avatarToAssign.id },
+        include: {
+          categories: { include: { assetStyles: { include: { colors: true } } } },
+        },
+      });
+      const pickFrom = (type: string) => {
+        const cat = full?.categories.find((c: any) => c.type === type);
+        if (!cat) return null;
+        for (const s of cat.assetStyles) {
+          const starters = s.colors.filter((a: any) => a.isStarter);
+          if (starters.length > 0) return starters[0].id;
+          if (s.colors.length > 0) return s.colors[0].id;
+        }
+        return null;
+      };
+      const toEquip: string[] = [];
+      const hairId = pickFrom("HAIR");
+      const dressId = pickFrom("DRESS");
+      if (hairId) toEquip.push(hairId);
+      if (dressId) toEquip.push(dressId);
+      if (toEquip.length > 0) {
+        await tx.childAsset.createMany({
+          data: toEquip.map((id) => ({ childId: child.id, assetId: id })),
+          skipDuplicates: true,
+        });
+        await tx.childAvatarEquipped.createMany({
+          data: toEquip.map((id) => ({ childAvatarId: ownership.id, assetId: id })),
+          skipDuplicates: true,
+        });
+      }
     }
 
     return { ...user, ...child };

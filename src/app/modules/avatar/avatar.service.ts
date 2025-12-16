@@ -4,9 +4,9 @@ import { deleteImageFromSupabase } from "../../../utils/UploadFileToSupabase";
 
 import AppError from "../../Errors/AppError";
 import {
-  CreateAssetInput,
-  CreateAvatarInput,
-  CreateStyleInput,
+    CreateAssetInput,
+    CreateAvatarInput,
+    CreateStyleInput,
 } from "./avatar.validation";
 
 
@@ -56,7 +56,9 @@ const createStyle = async (payload: CreateStyleInput) => {
   });
 
   if (existingStyle) {
-    throw new AppError(409, "Style already exists for this avatar and category");
+    const err = new AppError(409, "Style already exists for this avatar and category");
+    (err as any).data = { categoryId: category.id, style: existingStyle };
+    throw err;
   }
 
   return prisma.assetStyle.create({

@@ -1,7 +1,7 @@
-import express from "express";
-import { NotificationController } from "./notification.controller";
-import RoleValidation from "../../middlewares/RoleValidation";
 import { UserRole } from "@prisma/client";
+import express from "express";
+import RoleValidation from "../../middlewares/RoleValidation";
+import { NotificationController } from "./notification.controller";
 
 const router = express.Router();
 
@@ -14,7 +14,7 @@ router.delete("/:id", RoleValidation(UserRole.ADMIN), NotificationController.rem
 router.post("/push/register", RoleValidation(UserRole.PARENT, UserRole.CHILD), NotificationController.registerToken);
 router.post("/push/unregister", RoleValidation(UserRole.PARENT, UserRole.CHILD), NotificationController.unregisterToken);
 
-router.get("/feed", RoleValidation(UserRole.PARENT, UserRole.CHILD), NotificationController.listFeed);
+router.get("/feed", RoleValidation(UserRole.PARENT, UserRole.CHILD), NotificationController.listFeed); 
 router.post("/send", RoleValidation(UserRole.PARENT, UserRole.ADMIN), NotificationController.sendNow);
 router.post("/:id/read", RoleValidation(UserRole.PARENT, UserRole.CHILD), NotificationController.markRead);
 router.post("/read-all", RoleValidation(UserRole.PARENT, UserRole.CHILD), NotificationController.markAllRead);
