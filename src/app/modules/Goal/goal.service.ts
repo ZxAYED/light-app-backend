@@ -19,6 +19,8 @@ export const GoalService = {
 
   if (assignment.goal.status === "PAUSED") throw new AppError(400, "Goal is paused");
   if (assignment.goal.status === "COMPLETED") throw new AppError(400, "Goal is completed");
+  if (String(assignment.goal.status) === "FINISHED") throw new AppError(400, "Goal is finished");
+  if (assignment.goal.status === "CANCELLED") throw new AppError(400, "Goal is cancelled");
 
   const duration = assignment.goal.durationMin || 0;
 
@@ -35,6 +37,7 @@ export const GoalService = {
       alreadyCompleted: true,
     };
   }
+  await prisma.goal.update({ where: { id: payload.goalId }, data: { status: GoalStatus.ONGOING } });
   const key = `${payload.goalId}:${child.id}`;
   if ((global as any).__goalTimers?.has(key)) {
     const t = (global as any).__goalTimers.get(key);
@@ -45,7 +48,45 @@ export const GoalService = {
   const ms = remaining * 60 * 1000;
   const timeout = setTimeout(async () => {
     try {
-      await GoalService.updateProgress({ goalId: payload.goalId, userId: payload.userId, minutesCompleted: remaining });
+      const goal = await prisma.goal.findUnique({ where: { id: payload.goalId }, select: { title: true, authorId: true, status: true } });
+      if (!goal) return;
+      const assignments = await prisma.goalAssignment.findMany({
+        where: { goalId: payload.goalId, isDeleted: false },
+        select: { percentage: true, childId: true },
+      });
+      const total = assignments.length;
+      const completed = assignments.filter(a => (a.percentage ?? 0) >= 100).length;
+      const globalCompleted = total > 0 && completed === total;
+      const nextStatus = globalCompleted ? GoalStatus.COMPLETED : GoalStatus.FINISHED;
+      if (goal.status !== nextStatus) {
+        await prisma.goal.update({ where: { id: payload.goalId }, data: { status: nextStatus } });
+        if (nextStatus === GoalStatus.COMPLETED) {
+          await NotificationService.createAndSendNow({
+            type: NotificationType.GOAL_COMPLETED,
+            title: "Goal completed",
+            message: `${goal.title} has been completed`,
+            parentUserId: goal.authorId,
+            data: { goalId: payload.goalId },
+          });
+        } else if (nextStatus === GoalStatus.FINISHED) {
+          await NotificationService.createAndSendNow({
+            type: NotificationType.GOAL_FINISHED,
+            title: "Goal FINISHED",
+            message: `${goal.title} has been FINISHED`,
+            parentUserId: goal.authorId,
+            data: { goalId: payload.goalId },
+          });
+          for (const a of assignments) {
+            await NotificationService.createAndSendNow({
+              type: NotificationType.GOAL_COMPLETED,
+              title: "Goal completed",
+              message: `${goal.title} has been completed`,
+              childId: a.childId,
+              data: { goalId: payload.goalId },
+            });
+          }
+        }
+      }
     } catch {}
     finally {
       (global as any).__goalTimers.delete(key);
@@ -61,7 +102,7 @@ export const GoalService = {
 ) => {
   const { assignedChildIds, ...goalData } = payload;
 
-  // --- CHILD VALIDATION ---
+
   if (payload.authorRole === UserRole.CHILD) {
     const childProfile = await prisma.childProfile.findUnique({
       where: { userId: payload.authorId },
@@ -126,7 +167,6 @@ updateGoal: async (
   if (!existingGoal) throw new AppError(404, "Goal not found");
   if (existingGoal.isDeleted) throw new AppError(400, "Goal is deleted");
 
-  // --- CHILD VALIDATION ---
   if (payload.authorRole === UserRole.CHILD) {
     const childProfile = await prisma.childProfile.findUnique({
       where: { userId: payload.authorId },
@@ -134,7 +174,7 @@ updateGoal: async (
 
     if (!childProfile) throw new AppError(404, "Child profile not found");
 
-    // must be assigned
+
     const isAssigned = existingGoal.assignedChildren.some(
       (g) => g.childId === payload.authorId
     );
@@ -145,17 +185,21 @@ updateGoal: async (
     if (!childProfile.createGoals)
       throw new AppError(403, "You cannot update goals");
 
-    // Child cannot update forbidden fields
+    // Child may set status to ONGOING only; all other fields forbidden
+    if (payload.status && payload.status !== GoalStatus.ONGOING) {
+      throw new AppError(403, "Children can only set status to ONGOING");
+    }
     const forbidden = [
       "rewardCoins",
       "durationMin",
-      "type","status",
+      "type",
       "assignedChildIds",
       "isDeleted",
       "startDate",
       "endDate",
+      "title",
+      "description",
     ];
-
     for (const key of forbidden) {
       if ((payload as any)[key] !== undefined) {
         throw new AppError(403, `Children cannot update ${key}`);
@@ -163,8 +207,15 @@ updateGoal: async (
     }
   }
 
- 
   const updatedGoal = await prisma.$transaction(async (tx) => {
+    // If client requests ONGOING, update only status
+    if (payload.status === GoalStatus.ONGOING) {
+      const g = await tx.goal.update({
+        where: { id: payload.goalId },
+        data: { status: GoalStatus.ONGOING },
+      });
+      return g;
+    }
     const g = await tx.goal.update({
       where: { id: payload.goalId },
       data: {

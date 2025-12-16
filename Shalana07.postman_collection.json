@@ -116,7 +116,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "{{parentToken}}",
+								"value": "{{childToken}}",
 								"type": "text"
 							}
 						],
@@ -806,7 +806,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"avatarId\":\"e2a67cec-c4c3-4ca6-8e69-5f36c5a45e9a\",\r\n  \"type\": \"HAIR\",\r\n  \"styleName\": \"Silky\",\r\n  \"description\": \"Silky hairstyle with smooth texture\"\r\n}\r\n",
+									"raw": "{\r\n    \"avatarId\":\"36c8f4ca-bb40-4a15-a674-251210bdb2e4\",\r\n  \"type\": \"EYE\",\r\n  \"styleName\": \"Eye\",\r\n  \"description\": \"Blue pearly Eyes\"\r\n}\r\n",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -838,22 +838,28 @@
 									}
 								],
 								"body": {
-									"mode": "raw",
-									"raw": "{\r\n    \"avatarId\":\"e2a67cec-c4c3-4ca6-8e69-5f36c5a45e9a\",\r\n  \"type\": \"HAIR\",\r\n  \"styleName\": \"Silky\",\r\n  \"description\": \"Silky hairstyle with smooth texture\"\r\n}\r\n",
-									"options": {
-										"raw": {
-											"language": "json"
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "data",
+											"value": "{\"styleId\":\"4b68fb1a-ea99-42f1-9b4a-1e8e7e1328e8\",\n\"description\":\"kela mela sharabela another  hair\",\n\"colorName\":\"blue\",\"gender\":\"FEMALE\",\"rarity\":\"RARE\",\"price\":500,\"isStarter\":false}",
+											"type": "text"
+										},
+										{
+											"key": "file",
+											"type": "file",
+											"src": "/D:/Projects/shalana07-backend/assets/European avatar/1.png"
 										}
-									}
+									]
 								},
 								"url": {
-									"raw": "{{base-url}}/avatar/style",
+									"raw": "{{base-url}}/avatar/create-asset",
 									"host": [
 										"{{base-url}}"
 									],
 									"path": [
 										"avatar",
-										"style"
+										"create-asset"
 									]
 								}
 							},
@@ -1296,6 +1302,192 @@
 					]
 				},
 				{
+					"name": "deelete asset",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base-url}}/avatar/asset/fabbbeea-4157-4694-8d48-76d3d38af726",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"avatar",
+								"asset",
+								"fabbbeea-4157-4694-8d48-76d3d38af726"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "get single asseet details",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{childToken}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base-url}}/avatar/asset/fabbbeea-4157-4694-8d48-76d3d38af726",
+									"host": [
+										"{{base-url}}"
+									],
+									"path": [
+										"avatar",
+										"asset",
+										"fabbbeea-4157-4694-8d48-76d3d38af726"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "790"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"316-7uKivlmkDJgP6og3NJaT4WwGIuE\""
+								},
+								{
+									"key": "Date",
+									"value": "Mon, 08 Dec 2025 10:34:01 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Asset details fetched successfully\",\n    \"data\": {\n        \"id\": \"fabbbeea-4157-4694-8d48-76d3d38af726\",\n        \"styleId\": \"05b16197-92d7-49f5-995f-779c12ca46e0\",\n        \"assetImage\": \"https://phyrhqumhkdgjjgwmwhd.supabase.co/storage/v1/object/public/shalana07/asset-1765189969128.png\",\n        \"assetImgPath\": \"asset-1765189969128.png\",\n        \"colorName\": \"blue\",\n        \"description\": null,\n        \"gender\": \"UNISEX\",\n        \"price\": 200,\n        \"rarity\": \"COMMON\",\n        \"isStarter\": false,\n        \"purchased\": 0,\n        \"createdAt\": \"2025-12-08T10:32:50.459Z\",\n        \"style\": {\n            \"id\": \"05b16197-92d7-49f5-995f-779c12ca46e0\",\n            \"categoryId\": \"488f03ba-4fbf-4233-907c-c6decb582c6c\",\n            \"styleName\": \"BLUE\",\n            \"description\": \"Cute eyes \",\n            \"createdAt\": \"2025-12-08T10:32:08.222Z\",\n            \"category\": {\n                \"id\": \"488f03ba-4fbf-4233-907c-c6decb582c6c\",\n                \"avatarId\": \"e2a67cec-c4c3-4ca6-8e69-5f36c5a45e9a\",\n                \"type\": \"EYES\"\n            }\n        }\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "delete stylename",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{adminToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base-url}}/avatar/style/7be6f6f0-bce7-4775-8196-b96e42ac3b5d",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"avatar",
+								"style",
+								"7be6f6f0-bce7-4775-8196-b96e42ac3b5d"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "get single asseet details",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{childToken}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base-url}}/avatar/asset/fabbbeea-4157-4694-8d48-76d3d38af726",
+									"host": [
+										"{{base-url}}"
+									],
+									"path": [
+										"avatar",
+										"asset",
+										"fabbbeea-4157-4694-8d48-76d3d38af726"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "790"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"316-7uKivlmkDJgP6og3NJaT4WwGIuE\""
+								},
+								{
+									"key": "Date",
+									"value": "Mon, 08 Dec 2025 10:34:01 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Asset details fetched successfully\",\n    \"data\": {\n        \"id\": \"fabbbeea-4157-4694-8d48-76d3d38af726\",\n        \"styleId\": \"05b16197-92d7-49f5-995f-779c12ca46e0\",\n        \"assetImage\": \"https://phyrhqumhkdgjjgwmwhd.supabase.co/storage/v1/object/public/shalana07/asset-1765189969128.png\",\n        \"assetImgPath\": \"asset-1765189969128.png\",\n        \"colorName\": \"blue\",\n        \"description\": null,\n        \"gender\": \"UNISEX\",\n        \"price\": 200,\n        \"rarity\": \"COMMON\",\n        \"isStarter\": false,\n        \"purchased\": 0,\n        \"createdAt\": \"2025-12-08T10:32:50.459Z\",\n        \"style\": {\n            \"id\": \"05b16197-92d7-49f5-995f-779c12ca46e0\",\n            \"categoryId\": \"488f03ba-4fbf-4233-907c-c6decb582c6c\",\n            \"styleName\": \"BLUE\",\n            \"description\": \"Cute eyes \",\n            \"createdAt\": \"2025-12-08T10:32:08.222Z\",\n            \"category\": {\n                \"id\": \"488f03ba-4fbf-4233-907c-c6decb582c6c\",\n                \"avatarId\": \"e2a67cec-c4c3-4ca6-8e69-5f36c5a45e9a\",\n                \"type\": \"EYES\"\n            }\n        }\n    }\n}"
+						}
+					]
+				},
+				{
 					"name": "get avatar customization",
 					"request": {
 						"method": "GET",
@@ -1401,7 +1593,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"avatarId\" :\"b0177b7e-55e1-4808-8c44-0358f199513a\",\r\n   \r\n  \r\n  \"assetIds\": [\r\n    \"906248d1-47df-49dc-b0ea-b74763738293\"\r\n  ]\r\n\r\n}",
+							"raw": "{\r\n    \"avatarId\": \"b0177b7e-55e1-4808-8c44-0358f199513a\",\r\n    \"assetIds\": [\r\n        \"6206f7d1-e5c5-4cac-a152-47a9d3a9631e\",\"6206f7d1-e5c5-4cac-a152-47a9d3a9631e\",\r\n        \"4b68fb1a-ea99-42f1-9b4a-1e8e7e1328e8\",\"cde04927-8c3b-43f6-a8ed-94a613e1955e\"\r\n    ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1419,7 +1611,83 @@
 							]
 						}
 					},
-					"response": []
+					"response": [
+						{
+							"name": "save customization",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{childToken}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"avatarId\": \"00843abd-db82-4ce7-bd36-83f8341f1c18\",\r\n    \"assetIds\": [\r\n        \"9e051650-9bca-4fe8-91ac-fb5b69726878\",\r\n          \"ffb04393-0ebb-4a09-9fdb-f267cc1d7ed9\"\r\n    ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base-url}}/avatar/customization",
+									"host": [
+										"{{base-url}}"
+									],
+									"path": [
+										"avatar",
+										"customization"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "83"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"53-WKr31hnz3QghI6vjITX1WM6A39c\""
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 11 Dec 2025 03:39:15 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": false,\n    \"message\": \"Locked assetIds: ffb04393-0ebb-4a09-9fdb-f267cc1d7ed9\"\n}"
+						}
+					]
 				}
 			]
 		},
@@ -1646,6 +1914,467 @@
 							"body": "{\n    \"success\": true,\n    \"message\": \"Avatar purchased successfully\",\n    \"data\": {\n        \"ownershipId\": \"778589c8-56b8-4930-9f07-cc077bee57bf\"\n    }\n}"
 						}
 					]
+				}
+			]
+		},
+		{
+			"name": "notification",
+			"item": [
+				{
+					"name": "register token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"token\": \"fcm-device-token\",\r\n    \"platform\": \"ANDROID\",\r\n    \"userId\": \"parent-user-id\",\r\n    \"childId\": \"child-id\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base-url}}/notifications/push/register",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"notifications",
+								"push",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "send notification",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"type\": \"GOAL_COMPLETED\",\r\n  \"title\": \"Goal completed\",\r\n  \"message\": \"Math practice has been completed\",\r\n  \"childId\": \"b6ae82a1-f1f0-48e2-bee2-b198fadab16f\",\r\n  \"parentUserId\": \"59b99342-f71c-470c-aaab-c6508d63ef6d\",\r\n  \"data\": { \"goalId\": \"0bbc924b-7043-44a8-ad84-0718f3d718c5\" }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base-url}}/notifications/send",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"notifications",
+								"send"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "unregister token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"token\": \"fcm-device-token\" }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base-url}}/notifications/push/unregister",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"notifications",
+								"push",
+								"unregister"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "all notification feed",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"token\": \"fcm-device-token\" }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base-url}}/notifications/feed?page=1&limit=10",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"notifications",
+								"feed"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "mark read single notific",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"token\": \"fcm-device-token\" }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base-url}}/notifications/asdadasd/read",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"notifications",
+								"asdadasd",
+								"read"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "mark read all notific",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"token\": \"fcm-device-token\" }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base-url}}/notifications/read-all",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"notifications",
+								"read-all"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "posts",
+			"item": [
+				{
+					"name": "create post",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"title\": \"Optional title\",\r\n    \"content\": \"Post body text\",\r\n    \"description\": \"Optional summary\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base-url}}/posts",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"posts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update post",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"title\": \"New title\",\r\n    \"content\": \"Updated body\",\r\n    \"description\": \"Updated summary\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base-url}}/posts/4bced5f9-0837-457b-93c2-03cae25d4905",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"posts",
+								"4bced5f9-0837-457b-93c2-03cae25d4905"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete post",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"title\": \"New title\",\r\n    \"content\": \"Updated body\",\r\n    \"description\": \"Updated summary\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base-url}}/posts/4bced5f9-0837-457b-93c2-03cae25d4905",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"posts",
+								"4bced5f9-0837-457b-93c2-03cae25d4905"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create comment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"content\": \"Nice ass!\" }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base-url}}/posts/4bced5f9-0837-457b-93c2-03cae25d4905/comments",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"posts",
+								"4bced5f9-0837-457b-93c2-03cae25d4905",
+								"comments"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get all posts",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base-url}}/posts?page=1&limit=10",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"posts"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get single post",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base-url}}/posts/",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"posts",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update post",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base-url}}/posts/",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"posts",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete post",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{childToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base-url}}/posts/",
+							"host": [
+								"{{base-url}}"
+							],
+							"path": [
+								"posts",
+								""
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		}

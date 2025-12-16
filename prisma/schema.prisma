@@ -454,6 +454,8 @@ enum AuthorRole {
 enum GoalStatus {
   ACTIVE
   PAUSED
+  ONGOING
+  FINISHED
   COMPLETED
   CANCELLED
 }
@@ -467,6 +469,7 @@ enum GoalType {
 
 enum NotificationType {
   GOAL_CREATED
+  GOAL_FINISHED
   GOAL_UPDATED
   GOAL_COMPLETED
   HELP_REQUEST
