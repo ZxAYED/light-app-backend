@@ -55,11 +55,10 @@ const registerPushToken = async (payload: { token: string; platform: "ANDROID" |
 };
 
 const unregisterPushToken = async (token: string) => {
-  try {
-    return await prisma.pushToken.delete({ where: { token } });
-  } catch {
-    return null;
-  }
+  const existing = await prisma.pushToken.findUnique({ where: { token } });
+  if (!existing) return null;
+  await prisma.pushToken.delete({ where: { token } });
+  return { deleted: true };
 };
 
 const tokensForChild = async (childId: string) => {

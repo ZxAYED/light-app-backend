@@ -89,8 +89,8 @@ export const PostService = {
   deletePost: async (actor: { id: string; role: UserRole }, postId: string) => {
     const existing = await prisma.post.findUnique({ where: { id: postId } });
     if (!existing) throw new AppError(404, "Post not found");
-    if (actor.role !== UserRole.ADMIN) {
-      throw new AppError(403, "Only admins can delete posts");
+    if (actor.role !== UserRole.ADMIN && existing.authorId !== actor.id) {
+      throw new AppError(403, "Only the author or an admin can delete this post");
     }
     await prisma.post.delete({ where: { id: postId } });
     return { id: postId };
@@ -160,7 +160,7 @@ export const PostService = {
     const existing = await prisma.postComment.findUnique({ where: { id: commentId } });
     if (!existing) throw new AppError(404, "Comment not found");
     if (actor.role !== UserRole.ADMIN && existing.authorId !== actor.id) {
-      throw new AppError(403, "Forbidden");
+      throw new AppError(403, "Forbidden , Only the author or an admin can delete this comment");
     }
     await prisma.postComment.delete({ where: { id: commentId } });
     return { id: commentId };

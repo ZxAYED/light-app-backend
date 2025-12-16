@@ -41,7 +41,7 @@ router.delete(
 
 router.post(
   "/:postId/comments",
-  RoleValidation(UserRole.PARENT, UserRole.CHILD),
+  RoleValidation(UserRole.PARENT, UserRole.CHILD, UserRole.ADMIN),
   validateJSON(createCommentSchema),
   PostController.addComment
 );
